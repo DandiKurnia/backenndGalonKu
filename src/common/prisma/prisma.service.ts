@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from 'src/generated/prisma/client';
 import { Pool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -12,12 +12,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     }
     const pool = new Pool({ connectionString });
     const adapter = new PrismaPg(pool);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({ adapter });
   }
 
   async onModuleInit() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await this.$connect();
   }
 }

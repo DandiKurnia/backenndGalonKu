@@ -1,0 +1,30 @@
+{
+  "data": {
+    "super-admin": [
+      "devices.create",
+      "devices.read",
+      "devices.update",
+      "devices.delete",
+
+      "transactions.read",
+      "transactions.update",
+
+      "payments.read",
+      "payments.update",
+
+      "water_fill_logs.read"
+    ],
+
+    "customer": [
+      "devices.read",
+
+      "transactions.create",
+      "transactions.read",
+
+      "payments.create",
+      "payments.read"
+    ],
+
+    "operator": ["devices.read", "transactions.read", "water_fill_logs.read"]
+  }
+}

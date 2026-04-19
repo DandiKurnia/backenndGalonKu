@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "name": "Super Admin",
+      "email": "superadmin@mail.com",
+      "password": "password123",
+      "phoneNumber": "0811111111",
+      "roleKey": "super-admin"
+    },
+    {
+      "name": "Customer",
+      "email": "customer@mail.com",
+      "password": "password123",
+      "phoneNumber": "0822222222",
+      "roleKey": "customer"
+    },
+    {
+      "name": "Operator",
+      "email": "operator@mail.com",
+      "password": "password123",
+      "phoneNumber": "0833333333",
+      "roleKey": "operator"
+    }
+  ]
+}

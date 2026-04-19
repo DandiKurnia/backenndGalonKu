@@ -4,8 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
+  provider     = "prisma-client-js"
   moduleFormat = "cjs"
 }
 
@@ -45,9 +44,10 @@ model Role {
 }
 
 model Permission {
-  id           Int @id @default(autoincrement())
-  roleId       Int @map("role_id")
-  permissionId Int @map("permission_id")
+  id       Int    @id @default(autoincrement())
+  name     String
+  key      String @unique
+  resource String
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
@@ -58,15 +58,14 @@ model Permission {
 }
 
 model RolePermission {
-  id           Int @id @default(autoincrement())
-  roleId       Int @map("role_id")
-  permissionId Int @map("permission_id")
+  id           Int      @id @default(autoincrement())
+  roleId       Int      @map("role_id")
+  permissionId Int      @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-
-  role        Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permissions Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
   @@map("role_permissions")

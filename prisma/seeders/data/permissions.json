@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "name": "Create Device",
+      "key": "devices.create",
+      "resource": "devices"
+    },
+    {
+      "name": "Read Device",
+      "key": "devices.read",
+      "resource": "devices"
+    },
+    {
+      "name": "Update Device",
+      "key": "devices.update",
+      "resource": "devices"
+    },
+    {
+      "name": "Delete Device",
+      "key": "devices.delete",
+      "resource": "devices"
+    },
+    {
+      "name": "Control Device",
+      "key": "devices.control",
+      "resource": "devices"
+    },
+
+    {
+      "name": "Create Transaction",
+      "key": "transactions.create",
+      "resource": "transactions"
+    },
+    {
+      "name": "Read Transaction",
+      "key": "transactions.read",
+      "resource": "transactions"
+    },
+    {
+      "name": "Update Transaction",
+      "key": "transactions.update",
+      "resource": "transactions"
+    },
+
+    {
+      "name": "Create Payment",
+      "key": "payments.create",
+      "resource": "payments"
+    },
+    {
+      "name": "Read Payment",
+      "key": "payments.read",
+      "resource": "payments"
+    },
+    {
+      "name": "Update Payment",
+      "key": "payments.update",
+      "resource": "payments"
+    },
+
+    {
+      "name": "Read Water Fill Log",
+      "key": "water_fill_logs.read",
+      "resource": "water_fill_logs"
+    }
+  ]
+}
