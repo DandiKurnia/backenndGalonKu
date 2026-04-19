@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  roleId      Int     @map("role_id")
+  name        String
+  email       String  @unique
+  password    String
+  avatar      String? @map("avatar")
+  phoneNumber String  @map("phone_number")
+
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @map("updated_at")
+  role         Role          @relation(fields: [roleId], references: [id])
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  key  String @unique
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id           Int @id @default(autoincrement())
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  rolePermission RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int @id @default(autoincrement())
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  role        Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissions Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Device {
+  id         Int      @id @default(autoincrement())
+  deviceCode String   @unique @map("device_code")
+  name       String
+  status     String
+  lastActive DateTime @map("last_active")
+
+  addressId Int @map("address_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  address       Address         @relation(fields: [addressId], references: [id])
+  transactions  Transaction[]
+  waterFillLogs waterFillLogs[]
+
+  @@map("devices")
+}
+
+model Address {
+  id        Int    @id @default(autoincrement())
+  name      String
+  address   String
+  latitude  Float?
+  longitude Float?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  devices Device[]
+
+  @@map("addresses")
+}
+
+model Transaction {
+  id         Int    @id @default(autoincrement())
+  deviceId   Int    @map("device_id")
+  userId     Int    @map("user_id")
+  totalGalon Int    @map("total_galon")
+  totalPrice Float  @map("total_price")
+  status     String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  device             Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionDetails TransactionDetail[]
+  payment            Payment?
+  waterFillLogs      waterFillLogs[]
+
+  @@map("transactions")
+}
+
+model TransactionDetail {
+  id            Int   @id @default(autoincrement())
+  transactionId Int   @map("transaction_id")
+  galonQty      Int   @map("galon_qty")
+  priceOneGalon Float @map("price_one_galon")
+  subTotal      Float @map("sub_total")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("transaction_details")
+}
+
+model Payment {
+  id               Int       @id @default(autoincrement())
+  tratransactionId Int       @unique @map("transaction_id")
+  externalId       String?   @unique @map("external_id")
+  invoiceId        String?   @unique @map("invoice_id")
+  paymentMethod    String?   @map("payment_method")
+  status           String?
+  invoiceUrl       String?   @map("invoice_url")
+  expiryDate       DateTime? @map("expiry_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @map("updated_at")
+
+  transaction Transaction @relation(fields: [tratransactionId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model waterFillLogs {
+  id            Int      @id @default(autoincrement())
+  transactionId Int      @map("transaction_id")
+  deviceId      Int      @map("device_id")
+  startTime     DateTime @map("start_time")
+  endTime       DateTime @map("end_time")
+  duration      Int      @map("duration")
+  galonFilled   Int      @map("galon_filled")
+  status        String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  device      Device      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("water_fill_logs")
+}
