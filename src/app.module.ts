@@ -5,9 +5,11 @@ import { AppService } from './app.service';
 import { JwtStrategy } from './auth/strategies/jwt.srategy';
 import { PrismaService } from './common/prisma/prisma.service';
 import { RolesModule } from './roles/roles.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
-  imports: [AuthModule, RolesModule],
+  imports: [AuthModule, RolesModule, PermissionsModule, ProfileModule],
   controllers: [AppController],
   providers: [AppService, JwtStrategy, PrismaService],
 })
