@@ -27,6 +27,27 @@
     },
 
     {
+      "name": "Create Address",
+      "key": "addresses.create",
+      "resource": "addresses"
+    },
+    {
+      "name": "Read Address",
+      "key": "addresses.read",
+      "resource": "addresses"
+    },
+    {
+      "name": "Update Address",
+      "key": "addresses.update",
+      "resource": "addresses"
+    },
+    {
+      "name": "Delete Address",
+      "key": "addresses.delete",
+      "resource": "addresses"
+    },
+
+    {
       "name": "Create Transaction",
       "key": "transactions.create",
       "resource": "transactions"
