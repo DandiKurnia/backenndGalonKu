@@ -7,10 +7,22 @@ import { PrismaService } from './common/prisma/prisma.service';
 import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { ProfileModule } from './profile/profile.module';
+import { DevicesModule } from './devices/devices.module';
+import { QrcodeService } from './qrcode/qrcode.service';
+import { QrcodeModule } from './qrcode/qrcode.module';
+import { AddressModule } from './address/address.module';
 
 @Module({
-  imports: [AuthModule, RolesModule, PermissionsModule, ProfileModule],
+  imports: [
+    AuthModule,
+    RolesModule,
+    PermissionsModule,
+    ProfileModule,
+    DevicesModule,
+    QrcodeModule,
+    AddressModule,
+  ],
   controllers: [AppController],
-  providers: [AppService, JwtStrategy, PrismaService],
+  providers: [AppService, JwtStrategy, PrismaService, QrcodeService],
 })
 export class AppModule {}

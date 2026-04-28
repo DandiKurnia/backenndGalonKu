@@ -20,10 +20,12 @@ model User {
   password    String
   avatar      String? @map("avatar")
   phoneNumber String  @map("phone_number")
+  addressId   Int?    @map("address_id")
 
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @default(now()) @map("updated_at")
   role         Role          @relation(fields: [roleId], references: [id])
+  address      Address?      @relation(fields: [addressId], references: [id])
   transactions Transaction[]
 
   @@map("users")
@@ -73,10 +75,11 @@ model RolePermission {
 
 model Device {
   id         Int      @id @default(autoincrement())
-  deviceCode String   @unique @map("device_code")
+  deviceCode String?  @unique @map("device_code")
+  qrCodeUrl  String?  @map("qr_code_url")
   name       String
   status     String
-  lastActive DateTime @map("last_active")
+  lastActive DateTime @default(now()) @map("last_active")
 
   addressId Int @map("address_id")
 
@@ -101,6 +104,7 @@ model Address {
   updatedAt DateTime @default(now()) @map("updated_at")
 
   devices Device[]
+  users   User[]
 
   @@map("addresses")
 }
