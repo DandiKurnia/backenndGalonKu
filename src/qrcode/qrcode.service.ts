@@ -5,7 +5,12 @@ import * as QRCode from 'qrcode';
 
 @Injectable()
 export class QrcodeService {
-  private readonly uploadPath = '/public/uploads/qrcodes';
+  private readonly uploadPath = join(
+    process.cwd(),
+    'public',
+    'uploads',
+    'qrcodes',
+  );
 
   constructor() {
     if (!existsSync(this.uploadPath)) {

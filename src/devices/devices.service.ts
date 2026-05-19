@@ -101,7 +101,7 @@ export class DevicesService {
     }
   }
 
-  async findOne(id: number): Promise<Device> {
+  async findOne(id: number, userId: number): Promise<Device> {
     const device = await this.prisma.device.findUnique({
       where: { id: id },
       include: {
@@ -111,7 +111,50 @@ export class DevicesService {
     if (!device) {
       throw new BadRequestException('Device not found');
     }
-    return device;
+
+    const userHasRole = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        role: true,
+      },
+    });
+
+    if (userHasRole?.role.key === 'operator') {
+      if (!userHasRole.addressId)
+        throw new BadRequestException('Address not found');
+
+      if (device.addressId !== userHasRole.addressId) {
+        throw new BadRequestException('Device not found');
+      }
+
+      return (await this.prisma.device.findUnique({
+        where: {
+          id: id,
+        },
+        include: {
+          address: {
+            select: {
+              name: true,
+              address: true,
+            },
+          },
+        },
+      }))!;
+    } else {
+      return (await this.prisma.device.findUnique({
+        where: {
+          id: id,
+        },
+        include: {
+          address: {
+            select: {
+              name: true,
+              address: true,
+            },
+          },
+        },
+      }))!;
+    }
   }
 
   async update(id: number, createDeviceDto: CreateDeviceDto) {
@@ -150,6 +193,21 @@ export class DevicesService {
         status: newStatus,
       },
     });
+
+    return device;
+  }
+
+  async findByCode(deviceCode: string): Promise<Device> {
+    const device = await this.prisma.device.findUnique({
+      where: { deviceCode: deviceCode },
+      include: {
+        address: true,
+      },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found or invalid QR Code');
+    }
 
     return device;
   }
