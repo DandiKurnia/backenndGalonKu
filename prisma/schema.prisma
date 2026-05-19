@@ -22,11 +22,12 @@ model User {
   phoneNumber String  @map("phone_number")
   addressId   Int?    @map("address_id")
 
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @default(now()) @map("updated_at")
-  role         Role          @relation(fields: [roleId], references: [id])
-  address      Address?      @relation(fields: [addressId], references: [id])
-  transactions Transaction[]
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @default(now()) @map("updated_at")
+  role                 Role                 @relation(fields: [roleId], references: [id])
+  address              Address?             @relation(fields: [addressId], references: [id])
+  transactions         Transaction[]
+  transactionHistories TransactionHistory[]
 
   @@map("users")
 }
@@ -120,11 +121,12 @@ model Transaction {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
-  device             Device              @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactionDetails TransactionDetail[]
-  payment            Payment?
-  waterFillLogs      waterFillLogs[]
+  device               Device               @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactionDetails   TransactionDetail[]
+  payment              Payment?
+  waterFillLogs        waterFillLogs[]
+  transactionHistories TransactionHistory[]
 
   @@map("transactions")
 }
@@ -144,9 +146,24 @@ model TransactionDetail {
   @@map("transaction_details")
 }
 
+model TransactionHistory {
+  id            Int      @id @default(autoincrement())
+  transactionId Int      @map("transaction_id")
+  userId        Int?     @map("user_id")
+  status        String
+  description   String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id])
+
+  @@map("transaction_histories")
+}
+
 model Payment {
   id               Int       @id @default(autoincrement())
-  tratransactionId Int       @unique @map("transaction_id")
+  transactionId Int       @unique @map("transaction_id")
   externalId       String?   @unique @map("external_id")
   invoiceId        String?   @unique @map("invoice_id")
   paymentMethod    String?   @map("payment_method")
@@ -156,7 +173,7 @@ model Payment {
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @default(now()) @map("updated_at")
 
-  transaction Transaction @relation(fields: [tratransactionId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }

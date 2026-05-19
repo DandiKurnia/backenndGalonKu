@@ -44,8 +44,15 @@ export class DevicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.devicesService.findOne(+id);
+  async findOne(
+    @Param('id') id: string,
+    @Req() req: Request & { user: { id: number } },
+  ): Promise<BaseResponse<Device>> {
+    const result = await this.devicesService.findOne(+id, req.user.id);
+    return {
+      data: result,
+      message: 'Device found successfully',
+    };
   }
 
   @Patch(':id')
@@ -58,6 +65,15 @@ export class DevicesController {
     return {
       data: result,
       message: 'Device updated successfully',
+    };
+  }
+
+  @Get('scan/:code')
+  async findByCode(@Param('code') code: string): Promise<BaseResponse<Device>> {
+    const result = await this.devicesService.findByCode(code);
+    return {
+      data: result,
+      message: 'Device found successfully',
     };
   }
 
