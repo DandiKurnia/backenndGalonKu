@@ -6,6 +6,9 @@ type OpenCageResponse = {
       lat: number;
       lng: number;
     };
+    components?: {
+      country_code?: string;
+    };
   }>;
 };
 
@@ -24,12 +27,19 @@ export class OpenCageService {
           params: {
             q: address,
             key: apiKey,
-            limit: 1,
+            limit: 5,
+            countrycode: 'id',
+            language: 'id',
+            proximity: '-6.2088,106.8456',
+            no_annotations: 1,
           },
         },
       );
 
-      const result = response.data.results?.[0];
+      const idResult = response.data.results?.find(
+        (r) => r.components?.country_code === 'id',
+      );
+      const result = idResult ?? response.data.results?.[0];
       if (!result) {
         throw new BadRequestException('Address not found');
       }

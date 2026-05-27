@@ -181,6 +181,7 @@ export class TransactionsService {
         await prisma.transactionHistory.create({
           data: {
             transactionId: transactionId,
+            userId: payment.transaction.user.id,
             status: normalizedStatus,
             description: `Payment ${normalizedStatus} with total price ${totalPrice}`,
           },
@@ -252,9 +253,19 @@ export class TransactionsService {
     },
   };
 
-  // findOne: lengkap, untuk halaman detail transaksi
+  // findOne: lengkap, untuk halaman detail transaksi (customer)
   private readonly detailInclude = {
-    payment: true,
+    payment: {
+      select: {
+        id: true,
+        status: true,
+        paymentMethod: true,
+        invoiceUrl: true,
+        expiryDate: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    },
     user: {
       select: {
         id: true,
@@ -272,6 +283,15 @@ export class TransactionsService {
     transactionHistories: {
       orderBy: { createdAt: 'desc' as const },
     },
+    waterFillLogs: {
+      orderBy: { createdAt: 'desc' as const },
+    },
+  };
+
+  // findOne: varian admin/operator, ikut expose field internal Xendit untuk debugging
+  private readonly detailIncludeAdmin = {
+    ...this.detailInclude,
+    payment: true,
   };
 
   async findAll(userId: number) {
@@ -326,23 +346,21 @@ export class TransactionsService {
       throw new NotFoundException('User not found');
     }
 
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id },
-      include: this.detailInclude,
-    });
-
-    if (!transaction) {
-      throw new NotFoundException(`Transaction #${id} not found`);
-    }
-
     const roleKey = currentUser.role.key;
 
-    // super-admin can see all
     if (roleKey === 'super-admin') {
+      const transaction = await this.prisma.transaction.findUnique({
+        where: { id },
+        include: this.detailIncludeAdmin,
+      });
+
+      if (!transaction) {
+        throw new NotFoundException(`Transaction #${id} not found`);
+      }
+
       return transaction;
     }
 
-    // operator can see transactions from their assigned address
     if (roleKey === 'operator') {
       if (!currentUser.addressId) {
         throw new BadRequestException(
@@ -350,19 +368,28 @@ export class TransactionsService {
         );
       }
 
-      const device = await this.prisma.device.findUnique({
-        where: { id: transaction.deviceId },
+      const transaction = await this.prisma.transaction.findFirst({
+        where: {
+          id,
+          device: { addressId: currentUser.addressId },
+        },
+        include: this.detailIncludeAdmin,
       });
 
-      if (device?.addressId !== currentUser.addressId) {
+      if (!transaction) {
         throw new NotFoundException(`Transaction #${id} not found`);
       }
 
       return transaction;
     }
 
-    // customer can only see own transactions
-    if (transaction.userId !== userId) {
+    // customer: hanya bisa akses transaksi miliknya sendiri
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { id, userId },
+      include: this.detailInclude,
+    });
+
+    if (!transaction) {
       throw new NotFoundException(`Transaction #${id} not found`);
     }
 

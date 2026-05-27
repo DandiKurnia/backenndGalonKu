@@ -18,7 +18,11 @@ export class AddressService {
   }
 
   async create(createAddressDto: CreateAddressDto): Promise<Address> {
-    const { lat, lng } = await this.getCoordinates(createAddressDto.address);
+    const { lat, lng } =
+      createAddressDto.latitude !== undefined &&
+      createAddressDto.longitude !== undefined
+        ? { lat: createAddressDto.latitude, lng: createAddressDto.longitude }
+        : await this.getCoordinates(createAddressDto.address);
 
     return this.prisma.address.create({
       data: {
@@ -30,8 +34,9 @@ export class AddressService {
     });
   }
 
-  async findAll(): Promise<Address[]> {
+  async findAll(limit?: number): Promise<Address[]> {
     return this.prisma.address.findMany({
+      ...(limit && limit > 0 ? { take: limit } : {}),
       include: {
         devices: {
           select: {
@@ -77,7 +82,11 @@ export class AddressService {
     if (!address) {
       throw new BadRequestException('Address not found');
     }
-    const { lat, lng } = await this.getCoordinates(updateAddressDto.address);
+    const { lat, lng } =
+      updateAddressDto.latitude !== undefined &&
+      updateAddressDto.longitude !== undefined
+        ? { lat: updateAddressDto.latitude, lng: updateAddressDto.longitude }
+        : await this.getCoordinates(updateAddressDto.address);
 
     return this.prisma.address.update({
       where: {

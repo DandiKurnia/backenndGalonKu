@@ -19,7 +19,7 @@ model User {
   email       String  @unique
   password    String
   avatar      String? @map("avatar")
-  phoneNumber String  @map("phone_number")
+  phoneNumber String? @map("phone_number")
   addressId   Int?    @map("address_id")
 
   createdAt            DateTime             @default(now()) @map("created_at")
@@ -162,16 +162,16 @@ model TransactionHistory {
 }
 
 model Payment {
-  id               Int       @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   transactionId Int       @unique @map("transaction_id")
-  externalId       String?   @unique @map("external_id")
-  invoiceId        String?   @unique @map("invoice_id")
-  paymentMethod    String?   @map("payment_method")
-  status           String?
-  invoiceUrl       String?   @map("invoice_url")
-  expiryDate       DateTime? @map("expiry_date")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @default(now()) @map("updated_at")
+  externalId    String?   @unique @map("external_id")
+  invoiceId     String?   @unique @map("invoice_id")
+  paymentMethod String?   @map("payment_method")
+  status        String?
+  invoiceUrl    String?   @map("invoice_url")
+  expiryDate    DateTime? @map("expiry_date")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @map("updated_at")
 
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 

@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AddressService } from './address.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -32,9 +34,11 @@ export class AddressController {
   }
 
   @Get()
-  async findAll(): Promise<BaseResponse<Address[]>> {
+  async findAll(
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ): Promise<BaseResponse<Address[]>> {
     return {
-      data: await this.addressService.findAll(),
+      data: await this.addressService.findAll(limit),
       message: 'Addresses retrieved successfully',
     };
   }
