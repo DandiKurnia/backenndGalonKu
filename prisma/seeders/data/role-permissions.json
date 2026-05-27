@@ -17,7 +17,15 @@
       "payments.read",
       "payments.update",
 
-      "water_fill_logs.read"
+      "water_fill_logs.read",
+      "roles.read",
+      "roles.update",
+
+      "permissions.read",
+
+      "users.create",
+      "users.read",
+      "users.update"
     ],
 
     "customer": [

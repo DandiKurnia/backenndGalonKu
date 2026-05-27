@@ -4,12 +4,15 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../auth/guards/legged-in.guard';
 import { RoleResponse } from '../auth/response/auth-login.response';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
+import { PermissionGuard } from 'src/auth/guards/permission.guard';
+import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 
 @Controller('roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
+  @RequirePermissions('roles.read')
   @Get()
   async findAll(): Promise<BaseResponse<RoleResponse[]>> {
     const roles = await this.rolesService.findAll();
