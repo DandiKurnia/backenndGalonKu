@@ -294,7 +294,7 @@ export class TransactionsService {
     payment: true,
   };
 
-  async findAll(userId: number) {
+  async findAll(userId: number, limit?: number) {
     const currentUser = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { role: true },
@@ -310,6 +310,7 @@ export class TransactionsService {
       return this.prisma.transaction.findMany({
         include: this.listInclude,
         orderBy: { createdAt: 'desc' },
+        ...(limit && limit > 0 ? { take: limit } : {}),
       });
     }
 
@@ -326,6 +327,7 @@ export class TransactionsService {
         },
         include: this.listInclude,
         orderBy: { createdAt: 'desc' },
+        ...(limit && limit > 0 ? { take: limit } : {}),
       });
     }
 
@@ -333,6 +335,7 @@ export class TransactionsService {
       where: { userId },
       include: this.listInclude,
       orderBy: { createdAt: 'desc' },
+      ...(limit && limit > 0 ? { take: limit } : {}),
     });
   }
 

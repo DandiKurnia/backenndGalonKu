@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -39,8 +40,12 @@ export class TransactionsController {
   @Get()
   async findAll(
     @Req() req: Request & { user: { id: number } },
+    @Query('limit') limit?: string,
   ): Promise<BaseResponse<unknown>> {
-    const result = await this.transactionsService.findAll(req.user.id);
+    const result = await this.transactionsService.findAll(
+      req.user.id,
+      limit ? Number(limit) : undefined,
+    );
     return {
       data: result,
       message: 'Transactions retrieved successfully',
