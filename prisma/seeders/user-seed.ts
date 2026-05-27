@@ -35,7 +35,7 @@ type UsersSeederPrisma = {
         name: string;
         email: string;
         password: string;
-        phoneNumber: string;
+        phoneNumber?: string;
         avatar?: string;
         roleId: number;
       };

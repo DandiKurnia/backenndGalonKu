@@ -13,7 +13,8 @@ export const authRegisterSchema = z.object({
     .min(1, 'Name is required'),
   phone_number: z
     .string({ error: 'Phone is required and must be a string' })
-    .min(10, 'Phone must be at least 10 characters long'),
+    .min(10, 'Phone must be at least 10 characters long')
+    .optional(),
 });
 
 export class AuthRegisterDto {
