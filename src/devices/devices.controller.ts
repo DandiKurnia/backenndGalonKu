@@ -12,17 +12,18 @@ import {
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { JwtAuthGuard } from 'src/auth/guards/legged-in.guard';
+import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { Device } from '@prisma/client';
 
 @Controller('devices')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class DevicesController {
   constructor(private readonly devicesService: DevicesService) {}
 
   @Post()
-  @RequirePermissions('device.create')
+  @RequirePermissions('devices.create')
   async create(
     @Body() createDeviceDto: CreateDeviceDto,
   ): Promise<BaseResponse<Device>> {
@@ -56,7 +57,7 @@ export class DevicesController {
   }
 
   @Patch(':id')
-  @RequirePermissions('device.update')
+  @RequirePermissions('devices.update')
   async update(
     @Param('id') id: number,
     @Body() createDeviceDto: CreateDeviceDto,

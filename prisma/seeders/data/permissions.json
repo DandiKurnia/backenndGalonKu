@@ -78,11 +78,40 @@
       "key": "payments.update",
       "resource": "payments"
     },
-
+    {
+      "name": "Read Role",
+      "key": "roles.read",
+      "resource": "roles"
+    },
+    {
+      "name": "Update Role",
+      "key": "roles.update",
+      "resource": "roles"
+    },
+    {
+      "name": "Read Permission",
+      "key": "permissions.read",
+      "resource": "permissions"
+    },
     {
       "name": "Read Water Fill Log",
       "key": "water_fill_logs.read",
       "resource": "water_fill_logs"
+    },
+    {
+      "name": "Create User",
+      "key": "users.create",
+      "resource": "users"
+    },
+    {
+      "name": "Read User",
+      "key": "users.read",
+      "resource": "users"
+    },
+    {
+      "name": "Update User",
+      "key": "users.update",
+      "resource": "users"
     }
   ]
 }

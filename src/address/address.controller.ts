@@ -13,12 +13,13 @@ import {
 import { AddressService } from './address.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { JwtAuthGuard } from 'src/auth/guards/legged-in.guard';
+import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { Address } from '@prisma/client';
 
 @Controller('address')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class AddressController {
   constructor(private readonly addressService: AddressService) {}
 
