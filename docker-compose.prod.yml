@@ -4,10 +4,10 @@ services:
     container_name: galonku-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: lokal
+      POSTGRES_PASSWORD: DandiKurnia!3105
       POSTGRES_DB: galonku_db
     ports:
-      - '5431:5432'
+      - '5434:5432'
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -27,6 +27,25 @@ services:
       - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 20s
+      retries: 5
+
+  backend:
+    image: ${DOCKER_HUB_USERNAME}/galonku-backend:latest
+    container_name: backend
+    restart: unless-stopped
+    ports:
+      - '3003:3003'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.production
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3003/health']
       interval: 10s
       timeout: 20s
       retries: 5
