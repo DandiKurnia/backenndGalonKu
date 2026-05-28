@@ -52,6 +52,42 @@ export class TransactionsController {
     };
   }
 
+  @Get('summary')
+  async getDashboardSummary(
+    @Req() req: Request & { user: { id: number } },
+    @Query('addressId') addressId?: string,
+  ): Promise<BaseResponse<any>> {
+    const summary = await this.transactionsService.getDashboardSummary(
+      req.user.id,
+      addressId ? Number(addressId) : undefined,
+    );
+    return {
+      data: summary,
+      message: 'Dashboard summary retrieved successfully',
+    };
+  }
+
+  @Get('stats')
+  async getStats(
+    @Req() req: Request & { user: { id: number } },
+    @Query('groupBy') groupBy?: 'daily' | 'monthly',
+    @Query('addressId') addressId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<BaseResponse<any>> {
+    const stats = await this.transactionsService.getTransactionStats(
+      req.user.id,
+      groupBy || 'daily',
+      addressId ? Number(addressId) : undefined,
+      startDate,
+      endDate,
+    );
+    return {
+      data: stats,
+      message: 'Transaction statistics retrieved successfully',
+    };
+  }
+
   @Get(':id')
   async findOne(
     @Param('id') id: string,

@@ -407,4 +407,174 @@ export class TransactionsService {
   remove(id: number) {
     return `This action removes a #${id} transaction`;
   }
+
+  async getDashboardSummary(userId: number, addressId?: number) {
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const roleKey = currentUser.role.key;
+    let targetAddressId: number | undefined = undefined;
+
+    if (roleKey === 'operator') {
+      if (!currentUser.addressId) {
+        throw new BadRequestException(
+          'Operator does not have an assigned address',
+        );
+      }
+      targetAddressId = currentUser.addressId;
+    } else if (roleKey === 'super-admin') {
+      if (addressId) {
+        targetAddressId = addressId;
+      }
+    }
+
+    const totalDevices = await this.prisma.device.count({
+      where: {
+        ...(targetAddressId ? { addressId: targetAddressId } : {}),
+      },
+    });
+
+    const transactionAggregate = await this.prisma.transaction.aggregate({
+      where: {
+        status: {
+          in: [PaymentStatus.PAID, PaymentStatus.SETTLED],
+        },
+        ...(targetAddressId
+          ? {
+              device: {
+                addressId: targetAddressId,
+              },
+            }
+          : {}),
+      },
+      _count: {
+        id: true,
+      },
+      _sum: {
+        totalGalon: true,
+        totalPrice: true,
+      },
+    });
+
+    return {
+      totalDevices,
+      totalTransactions: transactionAggregate._count.id || 0,
+      totalGalons: transactionAggregate._sum.totalGalon || 0,
+      totalRevenue: transactionAggregate._sum.totalPrice || 0,
+    };
+  }
+
+  async getTransactionStats(
+    userId: number,
+    groupBy: 'daily' | 'monthly' = 'daily',
+    addressId?: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const roleKey = currentUser.role.key;
+    let targetAddressId: number | undefined = undefined;
+
+    if (roleKey === 'operator') {
+      if (!currentUser.addressId) {
+        throw new BadRequestException(
+          'Operator does not have an assigned address',
+        );
+      }
+      targetAddressId = currentUser.addressId;
+    } else if (roleKey === 'super-admin') {
+      if (addressId) {
+        targetAddressId = addressId;
+      }
+    }
+
+    const dateFilter: {
+      createdAt?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {};
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate) {
+        dateFilter.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        dateFilter.createdAt.lte = end;
+      }
+    }
+
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        status: {
+          in: [PaymentStatus.PAID, PaymentStatus.SETTLED],
+        },
+        ...(targetAddressId
+          ? {
+              device: {
+                addressId: targetAddressId,
+              },
+            }
+          : {}),
+        ...dateFilter,
+      },
+      select: {
+        createdAt: true,
+        totalGalon: true,
+        totalPrice: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    const statsMap = new Map<
+      string,
+      { totalGalon: number; totalPrice: number }
+    >();
+
+    transactions.forEach((tx) => {
+      let key = '';
+      const date = new Date(tx.createdAt);
+
+      if (groupBy === 'monthly') {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        key = `${year}-${month}`;
+      } else {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        key = `${year}-${month}-${day}`;
+      }
+
+      const existing = statsMap.get(key) || { totalGalon: 0, totalPrice: 0 };
+      statsMap.set(key, {
+        totalGalon: existing.totalGalon + tx.totalGalon,
+        totalPrice: existing.totalPrice + tx.totalPrice,
+      });
+    });
+
+    return Array.from(statsMap.entries()).map(([date, data]) => ({
+      date,
+      totalGalon: data.totalGalon,
+      totalPrice: data.totalPrice,
+    }));
+  }
 }
