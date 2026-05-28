@@ -1,8 +1,9 @@
 # Use the official Node.js image as the base image
 FROM node:22-alpine
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install curl for healthcheck and tzdata for Asia/Jakarta timezone
+RUN apk add --no-cache curl tzdata
+ENV TZ=Asia/Jakarta
 
 # Set working directory
 WORKDIR /app

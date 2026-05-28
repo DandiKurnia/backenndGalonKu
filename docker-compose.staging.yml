@@ -10,6 +10,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: DandiKurnia!3105
       POSTGRES_DB: galonku_db
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
     ports:
       - '5435:5432'
     restart: unless-stopped
@@ -24,6 +26,8 @@ services:
   redis:
     image: redis:latest
     container_name: redis-staging
+    environment:
+      TZ: Asia/Jakarta
     ports:
       - '6380:6379'
     restart: unless-stopped
@@ -39,6 +43,8 @@ services:
     image: ${DOCKER_HUB_USERNAME}/galonku-backend:staging
     container_name: backend-staging
     restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
     ports:
       - '3004:3003'
     depends_on:
