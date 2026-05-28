@@ -1,0 +1,59 @@
+# Docker Compose for STAGING environment
+# Usage: docker compose -f docker-compose.staging.yml up -d
+# Image pulled from Docker Hub with :staging tag
+
+services:
+  db:
+    image: postgres:16
+    container_name: galonku-db-staging
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: DandiKurnia!3105
+      POSTGRES_DB: galonku_db
+    ports:
+      - '5435:5432'
+    restart: unless-stopped
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 20s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: redis-staging
+    ports:
+      - '6380:6379'
+    restart: unless-stopped
+    volumes:
+      - redis_data_staging:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 20s
+      retries: 5
+
+  backend:
+    image: ${DOCKER_HUB_USERNAME}/galonku-backend:staging
+    container_name: backend-staging
+    restart: unless-stopped
+    ports:
+      - '3004:3003'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.staging
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3003/health']
+      interval: 10s
+      timeout: 20s
+      retries: 5
+
+volumes:
+  postgres_data_staging:
+  redis_data_staging:

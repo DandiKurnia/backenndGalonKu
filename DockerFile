@@ -1,0 +1,32 @@
+# Use the official Node.js image as the base image
+FROM node:22-alpine
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm cache clean --force
+RUN npm install --legacy-peer-deps
+
+# Copy the rest of the application code
+COPY . .
+
+# Generate Prisma Client code
+# DATABASE_URL is required by prisma.config.ts at load time, but `prisma generate`
+# does not actually connect, so a placeholder value is sufficient at build time.
+RUN DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public" npx prisma generate
+
+# Build TypeScript to dist/
+RUN npm run build
+
+# Expose the port the app runs on
+EXPOSE 3003
+
+# Command to run the app
+CMD [  "npm", "run", "start:migrate:prod" ]
