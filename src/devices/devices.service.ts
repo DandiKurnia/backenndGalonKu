@@ -63,7 +63,7 @@ export class DevicesService {
     });
   }
 
-  async findAll(userId: number): Promise<Device[]> {
+  async findAll(userId: number, limit: number): Promise<Device[]> {
     const userHasRole = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -86,6 +86,7 @@ export class DevicesService {
             },
           },
         },
+        ...(limit && limit > 0 ? { take: limit } : {}),
       });
     } else {
       return await this.prisma.device.findMany({
@@ -97,6 +98,7 @@ export class DevicesService {
             },
           },
         },
+        ...(limit && limit > 0 ? { take: limit } : {}),
       });
     }
   }

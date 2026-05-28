@@ -12,6 +12,7 @@ import { QrcodeService } from './qrcode/qrcode.service';
 import { QrcodeModule } from './qrcode/qrcode.module';
 import { AddressModule } from './address/address.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     QrcodeModule,
     AddressModule,
     TransactionsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy, PrismaService, QrcodeService],

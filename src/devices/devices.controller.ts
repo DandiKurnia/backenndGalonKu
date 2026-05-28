@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
@@ -37,9 +38,12 @@ export class DevicesController {
   @Get()
   async findAll(
     @Req() req: Request & { user: { id: number } },
+    @Query('limit') limit?: string,
   ): Promise<BaseResponse<Device[]>> {
+    const take = limit && Number(limit) > 0 ? Number(limit) : 0;
+    const result = await this.devicesService.findAll(req.user.id, take);
     return {
-      data: await this.devicesService.findAll(req.user.id),
+      data: result,
       message: 'Device retrived successfully',
     };
   }
