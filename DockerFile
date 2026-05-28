@@ -18,7 +18,9 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Generate Prisma Client code
-RUN npx prisma generate
+# DATABASE_URL is required by prisma.config.ts at load time, but `prisma generate`
+# does not actually connect, so a placeholder value is sufficient at build time.
+RUN DATABASE_URL="postgresql://user:pass@localhost:5432/db?schema=public" npx prisma generate
 
 # Build TypeScript to dist/
 RUN npm run build
