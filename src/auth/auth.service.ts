@@ -212,4 +212,57 @@ export class AuthService {
 
     return await this.buildAuthResponse(user);
   }
+
+  async refreshTokens(
+    rawToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const hash = this.hashToken(rawToken);
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { token: hash },
+      include: { user: true },
+    });
+
+    if (!token) throw new UnauthorizedException('Invalid refresh token');
+
+    if (token.revoked) {
+      // REUSE DETECTION: Revoke all tokens for this user
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: token.userId },
+        data: { revoked: true },
+      });
+      throw new UnauthorizedException(
+        'Token reuse detected. All sessions revoked.',
+      );
+    }
+
+    if (new Date() > token.expiresAt) {
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    // Revoke current token
+    await this.prisma.refreshToken.update({
+      where: { id: token.id },
+      data: { revoked: true },
+    });
+
+    // Issue new pair
+    return this.generateTokenPair({
+      id: token.user.id,
+      email: token.user.email,
+      name: token.user.name,
+      roleId: token.user.roleId,
+    });
+  }
+
+  async logout(rawToken: string): Promise<void> {
+    const hash = this.hashToken(rawToken);
+    await this.prisma.refreshToken
+      .update({
+        where: { token: hash },
+        data: { revoked: true },
+      })
+      .catch(() => {
+        /* ignore if not found */
+      });
+  }
 }
