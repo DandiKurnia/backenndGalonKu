@@ -81,7 +81,10 @@ export class AuthService {
     const rawRefreshToken = this.generateRandomToken();
     const tokenHash = this.hashToken(rawRefreshToken);
 
-    const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7', 10);
+    const expiryDays = parseInt(
+      process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7',
+      10,
+    );
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiryDays);
 

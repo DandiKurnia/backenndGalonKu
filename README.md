@@ -5,20 +5,60 @@ Selamat datang di dokumentasi API proyek **GalonKu Backend**. Proyek ini adalah 
 ---
 
 ## 🗺️ Daftar Isi
-- [⚡ Fitur Utama](#-fitur-utama)
-- [🏗️ Arsitektur Database & Hubungan](#️-arsitektur-database--hubungan)
-- [🛠️ Persyaratan Lingkungan (Environment Variables)](#️-persyaratan-lingkungan-environment-variables)
-- [🧩 Standar Response & Request](#-standar-response--request)
-- [📂 API Reference](#-api-reference)
-  - [🔐 1. Authentication (`/auth`)](#-1-authentication-auth)
-  - [👤 2. Profile Management (`/profile`)](#-2-profile-management-profile)
-  - [👥 3. User Management (`/users`)](#-3-user-management-users)
-  - [📍 4. Address Management (`/address`)](#-4-address-management-address)
-  - [📱 5. Device Management (`/devices`)](#-5-device-management-devices)
-  - [💳 6. Transactions & Payments (`/transactions`)](#-6-transactions--payments-transactions)
-  - [⚡ 7. Webhooks (`/transactions/webhook`)](#-7-webhooks-transactionswebhook)
-  - [🔑 8. Roles & Permissions (`/roles` & `/permissions`)](#-8-roles--permissions-roles--permissions)
-- [💻 Cara Menjalankan Project](#-cara-menjalankan-project)
+
+- [🥤 GalonKu Backend API Documentation](#-galonku-backend-api-documentation)
+  - [🗺️ Daftar Isi](#️-daftar-isi)
+  - [⚡ Fitur Utama](#-fitur-utama)
+  - [🏗️ Arsitektur Database \& Hubungan](#️-arsitektur-database--hubungan)
+  - [🛠️ Persyaratan Lingkungan (Environment Variables)](#️-persyaratan-lingkungan-environment-variables)
+  - [🧩 Standar Response \& Request](#-standar-response--request)
+    - [1. Snake Case Serialization](#1-snake-case-serialization)
+    - [2. Format Response Sukses (Standard Wrapper)](#2-format-response-sukses-standard-wrapper)
+    - [3. Format Response Error Validasi (Zod)](#3-format-response-error-validasi-zod)
+    - [4. Autentikasi](#4-autentikasi)
+  - [📂 API Reference](#-api-reference)
+    - [🔐 1. Authentication (`/auth`)](#-1-authentication-auth)
+      - [Register User](#register-user)
+      - [Login User](#login-user)
+    - [👤 2. Profile Management (`/profile`)](#-2-profile-management-profile)
+      - [Get Current Profile](#get-current-profile)
+      - [Update Profile](#update-profile)
+    - [👥 3. User Management (`/users`)](#-3-user-management-users)
+      - [List All Users](#list-all-users)
+      - [Create User](#create-user)
+      - [Update User](#update-user)
+    - [📍 4. Address Management (`/address`)](#-4-address-management-address)
+      - [Get All Addresses](#get-all-addresses)
+      - [Get Address by ID](#get-address-by-id)
+      - [Create Address](#create-address)
+      - [Update Address](#update-address)
+      - [Delete Address](#delete-address)
+    - [📱 5. Device Management (`/devices`)](#-5-device-management-devices)
+      - [Get All Devices](#get-all-devices)
+      - [Get Device by ID](#get-device-by-id)
+      - [Create Device](#create-device)
+      - [Update Device](#update-device)
+      - [Get Device by Code (Scan)](#get-device-by-code-scan)
+      - [Delete Device](#delete-device)
+    - [💳 6. Transactions \& Payments (`/transactions`)](#-6-transactions--payments-transactions)
+      - [Create Transaction (Order)](#create-transaction-order)
+      - [Get All Transactions](#get-all-transactions)
+      - [Get Transaction by ID](#get-transaction-by-id)
+      - [Get Dashboard Summary](#get-dashboard-summary)
+      - [Get Transaction Statistics](#get-transaction-statistics)
+    - [⚡ 7. Webhooks (`/transactions/webhook`)](#-7-webhooks-transactionswebhook)
+      - [Xendit Payment Webhook](#xendit-payment-webhook)
+    - [🔑 8. Roles \& Permissions (`/roles` \& `/permissions`)](#-8-roles--permissions-roles--permissions)
+      - [List All Roles](#list-all-roles)
+      - [Get Role by ID](#get-role-by-id)
+      - [Update Role Permissions](#update-role-permissions)
+      - [List All Permissions](#list-all-permissions)
+  - [💻 Cara Menjalankan Project](#-cara-menjalankan-project)
+    - [📥 1. Install Dependencies](#-1-install-dependencies)
+    - [🗃️ 2. Jalankan PostgreSQL dan Redis](#️-2-jalankan-postgresql-dan-redis)
+    - [🔄 3. Jalankan Prisma Migration \& Seeders](#-3-jalankan-prisma-migration--seeders)
+    - [🚀 4. Jalankan Aplikasi](#-4-jalankan-aplikasi)
+    - [🧪 5. Uji Coba Unit Test \& E2E](#-5-uji-coba-unit-test--e2e)
 
 ---
 
@@ -192,9 +232,11 @@ REDIS_PORT=6379
 ## 🧩 Standar Response & Request
 
 ### 1. Snake Case Serialization
-Seluruh response API otomatis dikonversi dari format `camelCase` (di dalam kode TypeScript/Database) menjadi `snake_case` sebelum dikirimkan ke client melalui `ResponseInterceptor`. 
+
+Seluruh response API otomatis dikonversi dari format `camelCase` (di dalam kode TypeScript/Database) menjadi `snake_case` sebelum dikirimkan ke client melalui `ResponseInterceptor`.
 
 ### 2. Format Response Sukses (Standard Wrapper)
+
 ```json
 {
   "message": "Pesan informasi sukses",
@@ -206,7 +248,9 @@ Seluruh response API otomatis dikonversi dari format `camelCase` (di dalam kode 
 ```
 
 ### 3. Format Response Error Validasi (Zod)
+
 Validasi request body menggunakan Zod. Jika terjadi kesalahan validasi, server akan mengembalikan HTTP Status `400 Bad Request` dengan format:
+
 ```json
 {
   "message": "Validation failed",
@@ -220,7 +264,9 @@ Validasi request body menggunakan Zod. Jika terjadi kesalahan validasi, server a
 ```
 
 ### 4. Autentikasi
+
 Sebagian besar endpoint dilindungi oleh `JwtAuthGuard`. Untuk mengakses endpoint tersebut, Anda wajib menyertakan token JWT pada header request:
+
 ```http
 Authorization: Bearer <your_access_token>
 ```
@@ -232,10 +278,11 @@ Authorization: Bearer <your_access_token>
 ### 🔐 1. Authentication (`/auth`)
 
 #### Register User
-* **Method**: `POST`
-* **Path**: `/auth/register`
-* **Auth Required**: No
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/auth/register`
+- **Auth Required**: No
+- **Request Body (JSON)**:
   ```json
   {
     "email": "user@example.com",
@@ -244,10 +291,11 @@ Authorization: Bearer <your_access_token>
     "phone_number": "081234567890" // opsional, minimal 10 karakter
   }
   ```
-* **Response (201 Created)**:
+- **Response (201 Created)**:
   ```json
   {
     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "id": 1,
       "email": "user@example.com",
@@ -265,28 +313,30 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Login User
-* **Method**: `POST`
-* **Path**: `/auth/login`
-* **Auth Required**: No
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/auth/login`
+- **Auth Required**: No
+- **Request Body (JSON)**:
   ```json
   {
     "email": "user@example.com",
     "password": "securepassword123"
   }
   ```
-* **Response (200 OK)**:
-  *(Format response sama dengan endpoint Register)*
+- **Response (200 OK)**:
+  _(Format response sama dengan endpoint Register)_
 
 ---
 
 ### 👤 2. Profile Management (`/profile`)
 
 #### Get Current Profile
-* **Method**: `GET`
-* **Path**: `/profile`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/profile`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Profile fetched successfully",
@@ -306,18 +356,19 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Update Profile
-* **Method**: `PATCH`
-* **Path**: `/profile`
-* **Auth Required**: Yes (JWT Bearer)
-* **Request Body**: `multipart/form-data`
-  * **Fields**:
-    * `name` (string, opsional)
-    * `email` (string, opsional)
-    * `password` (string, opsional, min 8 karakter)
-    * `phone_number` (string, opsional, min 10 karakter)
-  * **Files**:
-    * `avatar` (File gambar format: `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`, opsional)
-* **Response (200 OK)**:
+
+- **Method**: `PATCH`
+- **Path**: `/profile`
+- **Auth Required**: Yes (JWT Bearer)
+- **Request Body**: `multipart/form-data`
+  - **Fields**:
+    - `name` (string, opsional)
+    - `email` (string, opsional)
+    - `password` (string, opsional, min 8 karakter)
+    - `phone_number` (string, opsional, min 10 karakter)
+  - **Files**:
+    - `avatar` (File gambar format: `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`, opsional)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Profile updated successfully",
@@ -341,12 +392,13 @@ Authorization: Bearer <your_access_token>
 ### 👥 3. User Management (`/users`)
 
 #### List All Users
-* **Method**: `GET`
-* **Path**: `/users`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `users.read`
-* **Query Params**: `limit` (integer, opsional)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/users`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `users.read`
+- **Query Params**: `limit` (integer, opsional)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Users retrieved successfully",
@@ -367,11 +419,12 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Create User
-* **Method**: `POST`
-* **Path**: `/users`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `users.create`
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/users`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `users.create`
+- **Request Body (JSON)**:
   ```json
   {
     "name": "Ahmad Dani",
@@ -382,7 +435,7 @@ Authorization: Bearer <your_access_token>
     "addressId": 1 // ID Alamat (opsional)
   }
   ```
-* **Response (201 Created)**:
+- **Response (201 Created)**:
   ```json
   {
     "message": "User created successfully",
@@ -401,13 +454,14 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Update User
-* **Method**: `PATCH`
-* **Path**: `/users/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `users.update`
-* **Request Body (JSON)**:
-  *(Sama seperti request body POST `/users`)*
-* **Response (200 OK)**:
+
+- **Method**: `PATCH`
+- **Path**: `/users/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `users.update`
+- **Request Body (JSON)**:
+  _(Sama seperti request body POST `/users`)_
+- **Response (200 OK)**:
   ```json
   {
     "message": "User updated successfully",
@@ -430,11 +484,12 @@ Authorization: Bearer <your_access_token>
 ### 📍 4. Address Management (`/address`)
 
 #### Get All Addresses
-* **Method**: `GET`
-* **Path**: `/address`
-* **Query Params**: `limit` (integer, opsional)
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/address`
+- **Query Params**: `limit` (integer, opsional)
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Addresses retrieved successfully",
@@ -453,10 +508,11 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Get Address by ID
-* **Method**: `GET`
-* **Path**: `/address/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/address/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Address retrieved successfully",
@@ -473,11 +529,12 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Create Address
-* **Method**: `POST`
-* **Path**: `/address`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `addresses.create`
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/address`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `addresses.create`
+- **Request Body (JSON)**:
   ```json
   {
     "name": "Stasiun Depok Baru",
@@ -486,25 +543,27 @@ Authorization: Bearer <your_access_token>
     "longitude": 106.8188 // opsional, range: -180 s.d 180
   }
   ```
-* **Response (201 Created)**:
-  *(Mengembalikan objek address yang baru dibuat di dalam properti `data`)*
+- **Response (201 Created)**:
+  _(Mengembalikan objek address yang baru dibuat di dalam properti `data`)_
 
 #### Update Address
-* **Method**: `PATCH`
-* **Path**: `/address/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `addresses.update`
-* **Request Body (JSON)**:
-  *(Sama seperti request body POST `/address`)*
-* **Response (200 OK)**:
-  *(Mengembalikan objek address yang telah diperbarui)*
+
+- **Method**: `PATCH`
+- **Path**: `/address/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `addresses.update`
+- **Request Body (JSON)**:
+  _(Sama seperti request body POST `/address`)_
+- **Response (200 OK)**:
+  _(Mengembalikan objek address yang telah diperbarui)_
 
 #### Delete Address
-* **Method**: `DELETE`
-* **Path**: `/address/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `addresses.delete`
-* **Response (200 OK)**:
+
+- **Method**: `DELETE`
+- **Path**: `/address/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `addresses.delete`
+- **Response (200 OK)**:
   ```json
   {
     "message": "Address removed successfully",
@@ -517,11 +576,12 @@ Authorization: Bearer <your_access_token>
 ### 📱 5. Device Management (`/devices`)
 
 #### Get All Devices
-* **Method**: `GET`
-* **Path**: `/devices`
-* **Auth Required**: Yes (JWT Bearer)
-* **Keterangan**: Super Admin dapat melihat semua device, Operator melihat device di wilayah address-nya, Customer melihat device yang terdaftar.
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/devices`
+- **Auth Required**: Yes (JWT Bearer)
+- **Keterangan**: Super Admin dapat melihat semua device, Operator melihat device di wilayah address-nya, Customer melihat device yang terdaftar.
+- **Response (200 OK)**:
   ```json
   {
     "message": "Device retrived successfully",
@@ -542,10 +602,11 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Get Device by ID
-* **Method**: `GET`
-* **Path**: `/devices/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/devices/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Device found successfully",
@@ -564,57 +625,62 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Create Device
-* **Method**: `POST`
-* **Path**: `/devices`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `devices.create`
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/devices`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `devices.create`
+- **Request Body (JSON)**:
   ```json
   {
     "address_id": 1,
     "name": "Dispenser Lantai 2"
   }
   ```
-* **Response (201 Created)**:
-  *(Mengembalikan objek device beserta QR Code path yang di-generate otomatis)*
+- **Response (201 Created)**:
+  _(Mengembalikan objek device beserta QR Code path yang di-generate otomatis)_
 
 #### Update Device
-* **Method**: `PATCH`
-* **Path**: `/devices/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `devices.update`
-* **Request Body (JSON)**:
-  *(Sama seperti request body POST `/devices`)*
+
+- **Method**: `PATCH`
+- **Path**: `/devices/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `devices.update`
+- **Request Body (JSON)**:
+  _(Sama seperti request body POST `/devices`)_
 
 #### Get Device by Code (Scan)
-* **Method**: `GET`
-* **Path**: `/devices/scan/:code`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
-  *(Mencari device berdasarkan `device_code` unik, sering digunakan saat scan QR Code dari aplikasi mobile)*
+
+- **Method**: `GET`
+- **Path**: `/devices/scan/:code`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
+  _(Mencari device berdasarkan `device_code` unik, sering digunakan saat scan QR Code dari aplikasi mobile)_
 
 #### Delete Device
-* **Method**: `DELETE`
-* **Path**: `/devices/:id`
-* **Auth Required**: Yes (JWT Bearer)
+
+- **Method**: `DELETE`
+- **Path**: `/devices/:id`
+- **Auth Required**: Yes (JWT Bearer)
 
 ---
 
 ### 💳 6. Transactions & Payments (`/transactions`)
 
 #### Create Transaction (Order)
-* **Method**: `POST`
-* **Path**: `/transactions`
-* **Auth Required**: Yes (JWT Bearer)
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/transactions`
+- **Auth Required**: Yes (JWT Bearer)
+- **Request Body (JSON)**:
   ```json
   {
     "total_galon": 2, // jumlah galon yang dibeli
     "device_code": "DEV-1716801234" // kode dispenser
   }
   ```
-* **Response (201 Created)**:
-  * *Catatan*: API akan menghitung harga otomatis (Rp8.000/galon), membuat transaksi, menerbitkan invoice di **Xendit**, lalu mendaftarkan expiry-timer BullMQ.
+- **Response (201 Created)**:
+  - _Catatan_: API akan menghitung harga otomatis (Rp8.000/galon), membuat transaksi, menerbitkan invoice di **Xendit**, lalu mendaftarkan expiry-timer BullMQ.
   ```json
   {
     "message": "Transaction created successfully",
@@ -644,28 +710,31 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Get All Transactions
-* **Method**: `GET`
-* **Path**: `/transactions`
-* **Auth Required**: Yes (JWT Bearer)
-* **Hak Akses**:
-  - *Super Admin*: Menampilkan seluruh transaksi sistem.
-  - *Operator*: Menampilkan transaksi alat dispenser yang berada di bawah pengawasannya (berdasarkan `address_id`).
-  - *Customer*: Menampilkan riwayat transaksi pribadinya.
+
+- **Method**: `GET`
+- **Path**: `/transactions`
+- **Auth Required**: Yes (JWT Bearer)
+- **Hak Akses**:
+  - _Super Admin_: Menampilkan seluruh transaksi sistem.
+  - _Operator_: Menampilkan transaksi alat dispenser yang berada di bawah pengawasannya (berdasarkan `address_id`).
+  - _Customer_: Menampilkan riwayat transaksi pribadinya.
 
 #### Get Transaction by ID
-* **Method**: `GET`
-* **Path**: `/transactions/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
-  * Mengembalikan data lengkap transaksi termasuk log pengisian air (`water_fill_logs`), riwayat transaksi (`transaction_histories`), rincian pembayaran, serta data user/device terkait.
+
+- **Method**: `GET`
+- **Path**: `/transactions/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
+  - Mengembalikan data lengkap transaksi termasuk log pengisian air (`water_fill_logs`), riwayat transaksi (`transaction_histories`), rincian pembayaran, serta data user/device terkait.
 
 #### Get Dashboard Summary
-* **Method**: `GET`
-* **Path**: `/transactions/summary`
-* **Auth Required**: Yes (JWT Bearer)
-* **Query Params**:
-  * `addressId` (number, opsional - digunakan oleh Super Admin untuk memfilter ringkasan wilayah tertentu)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/transactions/summary`
+- **Auth Required**: Yes (JWT Bearer)
+- **Query Params**:
+  - `addressId` (number, opsional - digunakan oleh Super Admin untuk memfilter ringkasan wilayah tertentu)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Dashboard summary retrieved successfully",
@@ -679,15 +748,16 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Get Transaction Statistics
-* **Method**: `GET`
-* **Path**: `/transactions/stats`
-* **Auth Required**: Yes (JWT Bearer)
-* **Query Params**:
-  * `groupBy` (string, opsional, pilihan: `daily` atau `monthly`, default: `daily`)
-  * `addressId` (number, opsional)
-  * `startDate` (string/ISO-date, opsional)
-  * `endDate` (string/ISO-date, opsional)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/transactions/stats`
+- **Auth Required**: Yes (JWT Bearer)
+- **Query Params**:
+  - `groupBy` (string, opsional, pilihan: `daily` atau `monthly`, default: `daily`)
+  - `addressId` (number, opsional)
+  - `startDate` (string/ISO-date, opsional)
+  - `endDate` (string/ISO-date, opsional)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Transaction statistics retrieved successfully",
@@ -711,10 +781,11 @@ Authorization: Bearer <your_access_token>
 ### ⚡ 7. Webhooks (`/transactions/webhook`)
 
 #### Xendit Payment Webhook
-* **Method**: `POST`
-* **Path**: `/transactions/webhook/xendit`
-* **Auth Required**: No (Diakses otomatis oleh callback Xendit)
-* **Request Body (JSON)**:
+
+- **Method**: `POST`
+- **Path**: `/transactions/webhook/xendit`
+- **Auth Required**: No (Diakses otomatis oleh callback Xendit)
+- **Request Body (JSON)**:
   ```json
   {
     "id": "6654490f23df65d4b8aa2",
@@ -727,7 +798,7 @@ Authorization: Bearer <your_access_token>
     "payer_email": "user@example.com"
   }
   ```
-* **Response (200 OK)**:
+- **Response (200 OK)**:
   ```json
   {
     "message": "Webhook received successfully"
@@ -739,11 +810,12 @@ Authorization: Bearer <your_access_token>
 ### 🔑 8. Roles & Permissions (`/roles` & `/permissions`)
 
 #### List All Roles
-* **Method**: `GET`
-* **Path**: `/roles`
-* **Auth Required**: Yes (JWT Bearer)
-* **Required Permission**: `roles.read`
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/roles`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `roles.read`
+- **Response (200 OK)**:
   ```json
   {
     "message": "Roles fetched successfully",
@@ -768,10 +840,11 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Get Role by ID
-* **Method**: `GET`
-* **Path**: `/roles/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/roles/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Role fetched by id 2 successfully",
@@ -791,16 +864,17 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### Update Role Permissions
-* **Method**: `PATCH`
-* **Path**: `/roles/:id`
-* **Auth Required**: Yes (JWT Bearer)
-* **Request Body (JSON)**:
+
+- **Method**: `PATCH`
+- **Path**: `/roles/:id`
+- **Auth Required**: Yes (JWT Bearer)
+- **Request Body (JSON)**:
   ```json
   {
     "permission_ids": [1, 2, 3] // array dari integer, tidak boleh kosong
   }
   ```
-* **Response (200 OK)**:
+- **Response (200 OK)**:
   ```json
   {
     "message": "Role updated by id 2 successfully",
@@ -813,10 +887,11 @@ Authorization: Bearer <your_access_token>
   ```
 
 #### List All Permissions
-* **Method**: `GET`
-* **Path**: `/permissions`
-* **Auth Required**: Yes (JWT Bearer)
-* **Response (200 OK)**:
+
+- **Method**: `GET`
+- **Path**: `/permissions`
+- **Auth Required**: Yes (JWT Bearer)
+- **Response (200 OK)**:
   ```json
   {
     "message": "Permission fetched successfully",
@@ -842,20 +917,25 @@ Authorization: Bearer <your_access_token>
 ## 💻 Cara Menjalankan Project
 
 ### 📥 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
 ### 🗃️ 2. Jalankan PostgreSQL dan Redis
+
 Pastikan PostgreSQL dan Redis server sudah berjalan di sistem Anda sesuai dengan parameter di `.env`.
 
 ### 🔄 3. Jalankan Prisma Migration & Seeders
+
 Jalankan migrasi database PostgreSQL untuk menyusun tabel-tabel baru:
+
 ```bash
 npx prisma migrate dev
 ```
 
-*(Opsional)* Jalankan seeder database jika tersedia untuk mengisi data peran default:
+_(Opsional)_ Jalankan seeder database jika tersedia untuk mengisi data peran default:
+
 ```bash
 npx prisma db seed
 ```
@@ -874,6 +954,7 @@ npm run start:prod
 ```
 
 ### 🧪 5. Uji Coba Unit Test & E2E
+
 ```bash
 # Menjalankan unit test
 npm run test
