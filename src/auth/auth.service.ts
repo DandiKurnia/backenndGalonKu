@@ -3,6 +3,7 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 import { AuthLoginDto } from './dto/auth-login.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import {
   AuthLoginResponse,
   UserResponse,
@@ -61,8 +62,38 @@ export class AuthService {
 
     return this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET_KEY ?? 'secretKey',
-      expiresIn: (process.env.JWT_EXPIRES_IN ?? '1h') as StringValue,
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as StringValue,
     });
+  }
+
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private generateRandomToken(): string {
+    return crypto.randomBytes(40).toString('hex');
+  }
+
+  private async generateTokenPair(
+    user: JwtUser,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const accessToken = this.generateToken(user);
+    const rawRefreshToken = this.generateRandomToken();
+    const tokenHash = this.hashToken(rawRefreshToken);
+
+    const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN ?? '7', 10);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiryDays);
+
+    await this.prisma.refreshToken.create({
+      data: {
+        token: tokenHash,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    return { accessToken, refreshToken: rawRefreshToken };
   }
 
   private transformUser(user: userWithRole): UserResponse {
@@ -88,12 +119,15 @@ export class AuthService {
     return transformedUser;
   }
 
-  private buildAuthResponse(user: userWithRole): AuthLoginResponse {
-    const accessToken = this.generateToken(user);
+  private async buildAuthResponse(
+    user: userWithRole,
+  ): Promise<AuthLoginResponse> {
+    const { accessToken, refreshToken } = await this.generateTokenPair(user);
     const userResponse = this.transformUser(user);
 
     const authResponse: AuthLoginResponse = {
       accessToken,
+      refreshToken,
       user: userResponse,
     };
 
@@ -131,7 +165,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.buildAuthResponse(user);
+    return await this.buildAuthResponse(user);
   }
 
   async register(request: AuthRegisterDto): Promise<AuthLoginResponse> {
@@ -176,6 +210,6 @@ export class AuthService {
       },
     });
 
-    return this.buildAuthResponse(user);
+    return await this.buildAuthResponse(user);
   }
 }
