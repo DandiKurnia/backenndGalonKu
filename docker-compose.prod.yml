@@ -43,6 +43,8 @@ services:
       TZ: Asia/Jakarta
     ports:
       - '3003:3003'
+    volumes:
+      - uploads_data:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -59,3 +61,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
