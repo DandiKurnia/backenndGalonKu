@@ -28,6 +28,7 @@ model User {
   address              Address?             @relation(fields: [addressId], references: [id])
   transactions         Transaction[]
   transactionHistories TransactionHistory[]
+  refreshTokens        RefreshToken[]
 
   @@map("users")
 }
@@ -193,4 +194,19 @@ model waterFillLogs {
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@map("water_fill_logs")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique          // SHA-256 hash
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }
