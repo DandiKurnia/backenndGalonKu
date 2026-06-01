@@ -55,6 +55,9 @@ export class AuthLoginResponse {
   accessToken?: string;
 
   @Expose()
+  refreshToken?: string;
+
+  @Expose()
   @Type(() => UserResponse)
   user?: UserResponse;
 }
