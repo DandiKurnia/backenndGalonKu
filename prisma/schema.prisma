@@ -76,12 +76,13 @@ model RolePermission {
 }
 
 model Device {
-  id         Int      @id @default(autoincrement())
-  deviceCode String?  @unique @map("device_code")
-  qrCodeUrl  String?  @map("qr_code_url")
-  name       String
-  status     String
-  lastActive DateTime @default(now()) @map("last_active")
+  id            Int      @id @default(autoincrement())
+  deviceCode    String?  @unique @map("device_code")
+  qrCodeUrl     String?  @map("qr_code_url")
+  name          String
+  qrStatus      String   @map("qr_status")
+  lastActive    DateTime @default(now()) @map("last_active")
+  statusDevice  String?  @map("status_device")
 
   addressId Int @map("address_id")
 

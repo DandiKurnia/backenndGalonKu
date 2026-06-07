@@ -37,8 +37,9 @@ export class DevicesService {
         data: {
           addressId: createDeviceDto.address_id,
           name: createDeviceDto.name,
-          status: DeviceStatus.ACTIVE,
+          statusDevice: DeviceStatus.ACTIVE,
           lastActive: new Date(),
+          qrStatus: DeviceStatus.WAITING,
         },
       });
 
@@ -170,14 +171,14 @@ export class DevicesService {
 
     const currentDevice = await this.prisma.device.findUnique({
       where: { id },
-      select: { status: true },
+      select: { statusDevice: true },
     });
 
     if (!currentDevice) {
       throw new BadRequestException('Device not found');
     }
 
-    const currentStatus = currentDevice.status as unknown as DeviceStatus;
+    const currentStatus = currentDevice.statusDevice as unknown as DeviceStatus;
 
     const newStatus = (() => {
       if (currentStatus === DeviceStatus.ACTIVE) {
@@ -192,7 +193,7 @@ export class DevicesService {
       data: {
         addressId: createDeviceDto.address_id,
         name: createDeviceDto.name,
-        status: newStatus,
+        statusDevice: newStatus,
       },
     });
 
@@ -211,7 +212,30 @@ export class DevicesService {
       throw new BadRequestException('Device not found or invalid QR Code');
     }
 
+    if (device.qrStatus == DeviceStatus.SCANNED) {
+      throw new BadRequestException('Device already scanned');
+    }
+    await this.prisma.device.update({
+      where: { id: device.id },
+      data: {
+        qrStatus: DeviceStatus.SCANNED,
+      },
+    });
+
     return device;
+  }
+
+  async getStatus(deviceCode: string): Promise<string> {
+    const device = await this.prisma.device.findUnique({
+      where: { deviceCode: deviceCode },
+      select: { qrStatus: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    return device.qrStatus as string;
   }
 
   remove(id: number) {

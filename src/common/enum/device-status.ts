@@ -1,4 +1,10 @@
 export enum DeviceStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
+  SCANNED = 'SCANNED',
+  ERROR = 'ERROR',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+  WAITING = 'WAITING',
 }

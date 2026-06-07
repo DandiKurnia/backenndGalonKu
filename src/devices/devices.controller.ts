@@ -82,6 +82,21 @@ export class DevicesController {
     };
   }
 
+  @Get('code/:code/status')
+  @UseGuards()
+  async getStatus(
+    @Param('code') code: string,
+  ): Promise<BaseResponse<{ qrStatus: string }>> {
+    const result = await this.devicesService.getStatus(code);
+
+    return {
+      data: {
+        qrStatus: result,
+      },
+      message: 'Device status retrieved successfully',
+    };
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.devicesService.remove(+id);

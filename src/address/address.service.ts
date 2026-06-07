@@ -41,7 +41,8 @@ export class AddressService {
         devices: {
           select: {
             name: true,
-            status: true,
+            statusDevice: true,
+            qrStatus: true,
           },
         },
       },
@@ -57,7 +58,8 @@ export class AddressService {
         devices: {
           select: {
             name: true,
-            status: true,
+            statusDevice: true,
+            qrStatus: true,
           },
         },
       },
