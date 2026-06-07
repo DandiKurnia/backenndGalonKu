@@ -82,7 +82,10 @@ model Device {
   name          String
   qrStatus      String   @map("qr_status")
   lastActive    DateTime @default(now()) @map("last_active")
-  statusDevice  String?  @map("status_device")
+  statusDevice     String?    @map("status_device")
+  deviceTokenHash  String?    @map("device_token_hash")
+  tokenIssuedAt    DateTime?  @map("token_issued_at")
+  tokenRevokedAt   DateTime?  @map("token_revoked_at")
 
   addressId Int @map("address_id")
 
