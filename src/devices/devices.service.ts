@@ -44,7 +44,7 @@ export class DevicesService {
           name: createDeviceDto.name,
           statusDevice: DeviceStatus.ACTIVE,
           lastActive: new Date(),
-          qrStatus: DeviceStatus.WAITING,
+          qrStatus: DeviceStatus.SUCCESS,
           deviceTokenHash: hash,
           tokenIssuedAt: new Date(),
         },
@@ -219,15 +219,14 @@ export class DevicesService {
       throw new BadRequestException('Device not found or invalid QR Code');
     }
 
-    if (device.qrStatus === (DeviceStatus.SCANNED as string)) {
-      throw new BadRequestException('Device already scanned');
+    if (
+      device.qrStatus === (DeviceStatus.SCANNED as string) ||
+      device.qrStatus === (DeviceStatus.PROCESSING as string)
+    ) {
+      throw new BadRequestException(
+        'Device is currently busy processing another scan/fill',
+      );
     }
-    await this.prisma.device.update({
-      where: { id: device.id },
-      data: {
-        qrStatus: DeviceStatus.SCANNED,
-      },
-    });
 
     return device;
   }
@@ -243,6 +242,25 @@ export class DevicesService {
     }
 
     return device.qrStatus;
+  }
+
+  async updateQRStatus(
+    deviceCode: string,
+    status: DeviceStatus,
+  ): Promise<void> {
+    const device = await this.prisma.device.findUnique({
+      where: { deviceCode },
+      select: { id: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    await this.prisma.device.update({
+      where: { id: device.id },
+      data: { qrStatus: status },
+    });
   }
 
   async rotateToken(deviceId: number): Promise<{ rawDeviceToken: string }> {

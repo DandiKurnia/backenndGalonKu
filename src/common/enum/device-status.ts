@@ -4,7 +4,7 @@ export enum DeviceStatus {
   SCANNED = 'SCANNED',
   ERROR = 'ERROR',
   SUCCESS = 'SUCCESS',
+  PROCESSING = 'PROCESSING',
   FAILED = 'FAILED',
   CANCELLED = 'CANCELLED',
-  WAITING = 'WAITING',
 }
