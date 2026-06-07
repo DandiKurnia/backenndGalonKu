@@ -12,12 +12,14 @@ export class DeviceAuthGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<{
+      headers: Record<string, string | string[] | undefined>;
+      params?: Record<string, string | undefined>;
+      device?: { id: number; deviceCode: string | null };
+    }>();
 
     const deviceCode = request.headers['x-device-code'] as string | undefined;
-    const deviceToken = request.headers['x-device-token'] as
-      | string
-      | undefined;
+    const deviceToken = request.headers['x-device-token'] as string | undefined;
 
     if (!deviceCode || !deviceToken) {
       throw new UnauthorizedException('Missing device credentials');

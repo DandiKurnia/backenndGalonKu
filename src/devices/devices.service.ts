@@ -219,7 +219,7 @@ export class DevicesService {
       throw new BadRequestException('Device not found or invalid QR Code');
     }
 
-    if (device.qrStatus == DeviceStatus.SCANNED) {
+    if (device.qrStatus === (DeviceStatus.SCANNED as string)) {
       throw new BadRequestException('Device already scanned');
     }
     await this.prisma.device.update({
@@ -242,7 +242,7 @@ export class DevicesService {
       throw new BadRequestException('Device not found');
     }
 
-    return device.qrStatus as string;
+    return device.qrStatus;
   }
 
   async rotateToken(deviceId: number): Promise<{ rawDeviceToken: string }> {

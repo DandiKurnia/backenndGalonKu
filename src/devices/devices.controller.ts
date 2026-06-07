@@ -31,7 +31,8 @@ export class DevicesController {
     const result = await this.devicesService.create(createDeviceDto);
     return {
       data: result,
-      message: 'Device created successfully. Store the rawDeviceToken securely — it will not be shown again.',
+      message:
+        'Device created successfully. Store the rawDeviceToken securely — it will not be shown again.',
     };
   }
 
@@ -90,15 +91,14 @@ export class DevicesController {
     const result = await this.devicesService.rotateToken(+id);
     return {
       data: result,
-      message: 'Device token rotated successfully. Store this token securely — it will not be shown again.',
+      message:
+        'Device token rotated successfully. Store this token securely — it will not be shown again.',
     };
   }
 
   @Post(':id/revoke-token')
   @RequirePermissions('devices.update')
-  async revokeToken(
-    @Param('id') id: string,
-  ): Promise<BaseResponse<null>> {
+  async revokeToken(@Param('id') id: string): Promise<BaseResponse<null>> {
     await this.devicesService.revokeToken(+id);
     return {
       data: null,
