@@ -27,11 +27,12 @@ export class DevicesController {
   @RequirePermissions('devices.create')
   async create(
     @Body() createDeviceDto: CreateDeviceDto,
-  ): Promise<BaseResponse<Device>> {
+  ): Promise<BaseResponse<{ device: Device; rawDeviceToken: string }>> {
     const result = await this.devicesService.create(createDeviceDto);
     return {
       data: result,
-      message: 'Device created successfully',
+      message:
+        'Device created successfully. Store the rawDeviceToken securely — it will not be shown again.',
     };
   }
 
@@ -79,6 +80,29 @@ export class DevicesController {
     return {
       data: result,
       message: 'Device found successfully',
+    };
+  }
+
+  @Post(':id/rotate-token')
+  @RequirePermissions('devices.update')
+  async rotateToken(
+    @Param('id') id: string,
+  ): Promise<BaseResponse<{ rawDeviceToken: string }>> {
+    const result = await this.devicesService.rotateToken(+id);
+    return {
+      data: result,
+      message:
+        'Device token rotated successfully. Store this token securely — it will not be shown again.',
+    };
+  }
+
+  @Post(':id/revoke-token')
+  @RequirePermissions('devices.update')
+  async revokeToken(@Param('id') id: string): Promise<BaseResponse<null>> {
+    await this.devicesService.revokeToken(+id);
+    return {
+      data: null,
+      message: 'Device token revoked successfully',
     };
   }
 

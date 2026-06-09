@@ -39,6 +39,9 @@ Selamat datang di dokumentasi API proyek **GalonKu Backend**. Proyek ini adalah 
       - [Create Device](#create-device)
       - [Update Device](#update-device)
       - [Get Device by Code (Scan)](#get-device-by-code-scan)
+      - [Get Device Status (ESP32)](#get-device-status-esp32)
+      - [Rotate Device Token (Admin)](#rotate-device-token-admin)
+      - [Revoke Device Token (Admin)](#revoke-device-token-admin)
       - [Delete Device](#delete-device)
     - [💳 6. Transactions \& Payments (`/transactions`)](#-6-transactions--payments-transactions)
       - [Create Transaction (Order)](#create-transaction-order)
@@ -67,7 +70,8 @@ Selamat datang di dokumentasi API proyek **GalonKu Backend**. Proyek ini adalah 
 - **Authentication & Authorization**: Registrasi, login, serta manajemen hak akses berbasis Role-Permission (Super Admin, Operator, dan Customer).
 - **Profile Management**: Pembaruan profil user (email, nama, password, nomor telepon) dan dukungan upload avatar (foto profil).
 - **User Management**: Manajemen data pengguna terpusat dengan batasan hak akses yang ketat.
-- **Device Management**: Registrasi unit dispenser air pintar (GalonKu), generate QR Code otomatis per device, serta scanning berbasis device code.
+- **Device Management**: Registrasi unit dispenser air pintar (GalonKu), generate QR Code otomatis per device, scanning berbasis device code, serta autentikasi ESP32 menggunakan **Device Token** (`x-device-token`).
+- **Device Token Auth**: Setiap device mendapat token unik (bcrypt hash) saat registrasi. Endpoint ESP32 dilindungi oleh `DeviceAuthGuard` yang memvalidasi header `x-device-code` + `x-device-token` tanpa perlu JWT.
 - **Address Management**: Pemetaan lokasi penempatan dispenser air pintar, lengkap dengan koordinat latitude dan longitude.
 - **Transactions & Payments**: Alur pembelian air galon otomatis terintegrasi dengan **Xendit Invoice** dan antrean expiry payment waktu-nyata menggunakan **Bull MQ** (didukung oleh Redis).
 - **Dashboard & Analytics**: Menyediakan visualisasi ringkasan kinerja penjualan galon, total pendapatan, jumlah perangkat aktif, serta statistik periodik (harian/bulanan).
@@ -120,7 +124,11 @@ erDiagram
         String device_code
         String qr_code_url
         String name
-        String status
+        String qr_status
+        String status_device
+        String device_token_hash
+        DateTime token_issued_at
+        DateTime token_revoked_at
         DateTime last_active
         Int address_id FK
         DateTime created_at
@@ -265,11 +273,27 @@ Validasi request body menggunakan Zod. Jika terjadi kesalahan validasi, server a
 
 ### 4. Autentikasi
 
+#### JWT (User/Admin/Operator)
+
 Sebagian besar endpoint dilindungi oleh `JwtAuthGuard`. Untuk mengakses endpoint tersebut, Anda wajib menyertakan token JWT pada header request:
 
 ```http
 Authorization: Bearer <your_access_token>
 ```
+
+#### Device Token (ESP32)
+
+Endpoint khusus perangkat ESP32 (seperti polling status) dilindungi oleh `DeviceAuthGuard`. Setiap device memiliki token unik yang diberikan saat registrasi. ESP32 mengirimkan dua header kustom:
+
+```http
+x-device-code: DEV-5
+x-device-token: dtkn_3a8f1b2c4d5e6f...
+```
+
+- **`x-device-code`**: Kode unik device (contoh: `DEV-5`), di-generate otomatis saat create device.
+- **`x-device-token`**: Token rahasia perangkat yang disimpan sebagai bcrypt hash di database. Token ini hanya ditampilkan **sekali** saat create atau rotate.
+
+**Jika token tidak valid, kedaluwarsa, atau di-revoke**, API akan mengembalikan `401 Unauthorized`.
 
 ---
 
@@ -638,7 +662,30 @@ Authorization: Bearer <your_access_token>
   }
   ```
 - **Response (201 Created)**:
-  _(Mengembalikan objek device beserta QR Code path yang di-generate otomatis)_
+  ```json
+  {
+    "message": "Device created successfully. Store the rawDeviceToken securely — it will not be shown again.",
+    "data": {
+      "device": {
+        "id": 5,
+        "device_code": "DEV-5",
+        "qr_code_url": "/uploads/qrcodes/DEV-5.png",
+        "name": "Dispenser Lantai 2",
+        "qr_status": "WAITING",
+        "status_device": "ACTIVE",
+        "device_token_hash": "$2b$10$...",
+        "token_issued_at": "2026-06-07T10:00:00.000Z",
+        "token_revoked_at": null,
+        "last_active": "2026-06-07T10:00:00.000Z",
+        "address_id": 1,
+        "created_at": "2026-06-07T10:00:00.000Z",
+        "updated_at": "2026-06-07T10:00:00.000Z"
+      },
+      "rawDeviceToken": "dtkn_3a8f1b2c4d5e6f..."
+    }
+  }
+  ```
+  > ⚠️ **Penting**: Simpan `rawDeviceToken` dari response ini! Token ini hanya ditampilkan **sekali** dan tidak bisa dilihat lagi setelahnya. Masukkan token ini ke perangkat ESP32 saat provisioning.
 
 #### Update Device
 
@@ -656,6 +703,75 @@ Authorization: Bearer <your_access_token>
 - **Auth Required**: Yes (JWT Bearer)
 - **Response (200 OK)**:
   _(Mencari device berdasarkan `device_code` unik, sering digunakan saat scan QR Code dari aplikasi mobile)_
+
+#### Get Device Status (ESP32)
+
+- **Method**: `GET`
+- **Path**: `/devices/code/:code/status`
+- **Auth Required**: No JWT — menggunakan **Device Token** (`x-device-code` + `x-device-token`)
+- **Ditujukan untuk**: Perangkat ESP32 yang melakukan polling status setiap 2 detik.
+- **Request Headers**:
+  ```http
+  x-device-code: DEV-5
+  x-device-token: dtkn_3a8f1b2c4d5e6f...
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "data": {
+      "qr_status": "WAITING"
+    },
+    "message": "Device status retrieved successfully"
+  }
+  ```
+- **Error Responses**:
+  | Status | Message | Penyebab |
+  |--------|---------|----------|
+  | `401` | `Missing device credentials` | Header `x-device-code` atau `x-device-token` tidak ada |
+  | `401` | `Invalid device` | `device_code` tidak ditemukan di database |
+  | `401` | `Invalid device token` | Token salah |
+  | `401` | `Device token revoked` | Token sudah di-revoke admin |
+  | `401` | `Device code mismatch` | Header `x-device-code` tidak cocok dengan param `:code` |
+
+- **Status Values (untuk ESP32 loop)**:
+  | `qr_status` | Tampilan di TFT ESP32 |
+  |-------------|----------------------|
+  | `WAITING`   | Tampilkan QR Code |
+  | `SCANNED`   | "Silakan mulai" |
+  | `PROCESSING`| "Sedang mengisi" |
+  | `DONE`      | "Selesai" |
+
+#### Rotate Device Token (Admin)
+
+- **Method**: `POST`
+- **Path**: `/devices/:id/rotate-token`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `devices.update`
+- **Keterangan**: Generate token baru untuk device. Token lama langsung tidak berlaku. Token baru dikembalikan **sekali saja**.
+- **Response (200 OK)**:
+  ```json
+  {
+    "data": {
+      "rawDeviceToken": "dtkn_newtoken..."
+    },
+    "message": "Device token rotated successfully. Store this token securely — it will not be shown again."
+  }
+  ```
+
+#### Revoke Device Token (Admin)
+
+- **Method**: `POST`
+- **Path**: `/devices/:id/revoke-token`
+- **Auth Required**: Yes (JWT Bearer)
+- **Required Permission**: `devices.update`
+- **Keterangan**: Membatalkan token device. Semua request dari ESP32 dengan token ini akan mendapat `401 Unauthorized`.
+- **Response (200 OK)**:
+  ```json
+  {
+    "data": null,
+    "message": "Device token revoked successfully"
+  }
+  ```
 
 #### Delete Device
 

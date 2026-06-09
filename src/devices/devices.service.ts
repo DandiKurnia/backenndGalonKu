@@ -4,6 +4,7 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 import { QrcodeService } from 'src/qrcode/qrcode.service';
 import { DeviceStatus } from 'src/common/enum/device-status';
 import { Device } from '@prisma/client';
+import { generateDeviceToken } from 'src/common/utils/device-token.util';
 
 @Injectable()
 export class DevicesService {
@@ -12,7 +13,9 @@ export class DevicesService {
     private readonly qrcodeService: QrcodeService,
   ) {}
 
-  async create(createDeviceDto: CreateDeviceDto) {
+  async create(
+    createDeviceDto: CreateDeviceDto,
+  ): Promise<{ device: Device; rawDeviceToken: string }> {
     return await this.prisma.$transaction(async (prisma) => {
       const address = await prisma.address.findUnique({
         where: { id: createDeviceDto.address_id },
@@ -33,12 +36,17 @@ export class DevicesService {
         throw new BadRequestException('Name already exists at this address');
       }
 
+      const { rawToken, hash } = generateDeviceToken();
+
       const device = await prisma.device.create({
         data: {
           addressId: createDeviceDto.address_id,
           name: createDeviceDto.name,
-          status: DeviceStatus.ACTIVE,
+          statusDevice: DeviceStatus.ACTIVE,
           lastActive: new Date(),
+          qrStatus: DeviceStatus.SUCCESS,
+          deviceTokenHash: hash,
+          tokenIssuedAt: new Date(),
         },
       });
 
@@ -59,7 +67,7 @@ export class DevicesService {
         },
       });
 
-      return updatedDevice;
+      return { device: updatedDevice, rawDeviceToken: rawToken };
     });
   }
 
@@ -170,14 +178,14 @@ export class DevicesService {
 
     const currentDevice = await this.prisma.device.findUnique({
       where: { id },
-      select: { status: true },
+      select: { statusDevice: true },
     });
 
     if (!currentDevice) {
       throw new BadRequestException('Device not found');
     }
 
-    const currentStatus = currentDevice.status as unknown as DeviceStatus;
+    const currentStatus = currentDevice.statusDevice as unknown as DeviceStatus;
 
     const newStatus = (() => {
       if (currentStatus === DeviceStatus.ACTIVE) {
@@ -192,7 +200,7 @@ export class DevicesService {
       data: {
         addressId: createDeviceDto.address_id,
         name: createDeviceDto.name,
-        status: newStatus,
+        statusDevice: newStatus,
       },
     });
 
@@ -211,7 +219,90 @@ export class DevicesService {
       throw new BadRequestException('Device not found or invalid QR Code');
     }
 
+    if (
+      device.qrStatus === (DeviceStatus.SCANNED as string) ||
+      device.qrStatus === (DeviceStatus.PROCESSING as string)
+    ) {
+      throw new BadRequestException(
+        'Device is currently busy processing another scan/fill',
+      );
+    }
+
     return device;
+  }
+
+  async getStatus(deviceCode: string): Promise<string> {
+    const device = await this.prisma.device.findUnique({
+      where: { deviceCode: deviceCode },
+      select: { qrStatus: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    return device.qrStatus;
+  }
+
+  async updateQRStatus(
+    deviceCode: string,
+    status: DeviceStatus,
+  ): Promise<void> {
+    const device = await this.prisma.device.findUnique({
+      where: { deviceCode },
+      select: { id: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    await this.prisma.device.update({
+      where: { id: device.id },
+      data: { qrStatus: status },
+    });
+  }
+
+  async rotateToken(deviceId: number): Promise<{ rawDeviceToken: string }> {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+      select: { id: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    const { rawToken, hash } = generateDeviceToken();
+
+    await this.prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        deviceTokenHash: hash,
+        tokenIssuedAt: new Date(),
+        tokenRevokedAt: null,
+      },
+    });
+
+    return { rawDeviceToken: rawToken };
+  }
+
+  async revokeToken(deviceId: number): Promise<void> {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+      select: { id: true },
+    });
+
+    if (!device) {
+      throw new BadRequestException('Device not found');
+    }
+
+    await this.prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        tokenRevokedAt: new Date(),
+      },
+    });
   }
 
   remove(id: number) {

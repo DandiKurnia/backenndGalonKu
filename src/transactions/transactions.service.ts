@@ -12,6 +12,7 @@ import { Transaction, Payment } from '@prisma/client';
 import { PaymentStatus } from 'src/common/enum/payment-status.enum';
 import { QueueService } from 'src/common/queue/queue.service';
 import { XenditWebhookDto } from './dto/xendit-webhook.dto';
+import { DeviceStatus } from 'src/common/enum/device-status';
 
 type NormalizedInvoice = {
   id: string | null;
@@ -81,7 +82,7 @@ export class TransactionsService {
       amount: totalPrice,
       payerEmail: user.email,
       successRedirectURL: `${process.env.FRONTEND_URL}/transactions/${transaction.id}`,
-      invoiceDuration: 86400,
+      invoiceDuration: 300,
     });
 
     const normalizedInvoice = this.normalizeInvoice(rawInvoice);
@@ -184,6 +185,13 @@ export class TransactionsService {
             userId: payment.transaction.user.id,
             status: normalizedStatus,
             description: `Payment ${normalizedStatus} with total price ${totalPrice}`,
+          },
+        });
+
+        await prisma.device.update({
+          where: { id: payment.transaction.deviceId },
+          data: {
+            qrStatus: DeviceStatus.SCANNED,
           },
         });
       }
