@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -40,11 +41,11 @@ export class TransactionsController {
   @Get()
   async findAll(
     @Req() req: Request & { user: { id: number } },
-    @Query('limit') limit?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ): Promise<BaseResponse<unknown>> {
     const result = await this.transactionsService.findAll(
       req.user.id,
-      limit ? Number(limit) : undefined,
+      limit,
     );
     return {
       data: result,

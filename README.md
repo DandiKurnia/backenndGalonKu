@@ -830,6 +830,7 @@ x-device-token: dtkn_3a8f1b2c4d5e6f...
 - **Method**: `GET`
 - **Path**: `/transactions`
 - **Auth Required**: Yes (JWT Bearer)
+- **Query Params**: `limit` (integer, opsional) — batasi jumlah transaksi yang dikembalikan
 - **Hak Akses**:
   - _Super Admin_: Menampilkan seluruh transaksi sistem.
   - _Operator_: Menampilkan transaksi alat dispenser yang berada di bawah pengawasannya (berdasarkan `address_id`).
