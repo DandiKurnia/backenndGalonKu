@@ -43,10 +43,7 @@ export class TransactionsController {
     @Req() req: Request & { user: { id: number } },
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ): Promise<BaseResponse<unknown>> {
-    const result = await this.transactionsService.findAll(
-      req.user.id,
-      limit,
-    );
+    const result = await this.transactionsService.findAll(req.user.id, limit);
     return {
       data: result,
       message: 'Transactions retrieved successfully',
