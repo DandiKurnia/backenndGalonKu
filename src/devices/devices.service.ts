@@ -231,17 +231,44 @@ export class DevicesService {
     return device;
   }
 
-  async getStatus(deviceCode: string): Promise<string> {
+  async getStatus(
+    deviceCode: string,
+  ): Promise<{ qrStatus: string; totalGalon: number }> {
     const device = await this.prisma.device.findUnique({
       where: { deviceCode: deviceCode },
-      select: { qrStatus: true },
+      select: { id: true, qrStatus: true },
     });
 
     if (!device) {
       throw new BadRequestException('Device not found');
     }
 
-    return device.qrStatus;
+    let totalGalon = 0;
+    if (
+      device.qrStatus === (DeviceStatus.SCANNED as string) ||
+      device.qrStatus === (DeviceStatus.PROCESSING as string)
+    ) {
+      const latestTransaction = await this.prisma.transaction.findFirst({
+        where: {
+          deviceId: device.id,
+          status: { in: ['PAID', 'SETTLED'] },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          totalGalon: true,
+        },
+      });
+      if (latestTransaction) {
+        totalGalon = latestTransaction.totalGalon;
+      }
+    }
+
+    return {
+      qrStatus: device.qrStatus,
+      totalGalon,
+    };
   }
 
   async updateQRStatus(

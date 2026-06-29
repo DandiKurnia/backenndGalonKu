@@ -12,12 +12,13 @@ export class DevicesPublicController {
   @Get(':code/status')
   async getStatus(
     @Param('code') code: string,
-  ): Promise<BaseResponse<{ qrStatus: string }>> {
+  ): Promise<BaseResponse<{ qrStatus: string; totalGalon: number }>> {
     const result = await this.devicesService.getStatus(code);
 
     return {
       data: {
-        qrStatus: result,
+        qrStatus: result.qrStatus,
+        totalGalon: result.totalGalon,
       },
       message: 'Device status retrieved successfully',
     };
