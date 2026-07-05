@@ -830,11 +830,48 @@ x-device-token: dtkn_3a8f1b2c4d5e6f...
 - **Method**: `GET`
 - **Path**: `/transactions`
 - **Auth Required**: Yes (JWT Bearer)
-- **Query Params**: `limit` (integer, opsional) — batasi jumlah transaksi yang dikembalikan
+- **Query Params**:
+  - `limit` (integer, opsional, default: `10`) — Jumlah data per halaman.
+  - `page` (integer, opsional, default: `1`) — Halaman data yang ingin diambil.
 - **Hak Akses**:
   - _Super Admin_: Menampilkan seluruh transaksi sistem.
   - _Operator_: Menampilkan transaksi alat dispenser yang berada di bawah pengawasannya (berdasarkan `address_id`).
   - _Customer_: Menampilkan riwayat transaksi pribadinya.
+- **Response (200 OK)**:
+  ```json
+  {
+    "message": "Transactions retrieved successfully",
+    "data": {
+      "items": [
+        {
+          "id": 12,
+          "device_id": 1,
+          "user_id": 1,
+          "total_galon": 2,
+          "total_price": 16000,
+          "status": "PAID",
+          "created_at": "2026-05-27T08:15:30.000Z",
+          "updated_at": "2026-05-27T08:16:00.000Z",
+          "payment": {
+            "status": "PAID"
+          },
+          "user": {
+            "name": "Dandi Kurnia"
+          },
+          "device": {
+            "name": "Dispenser Lantai 1"
+          }
+        }
+      ],
+      "meta": {
+        "total": 45,
+        "page": 1,
+        "limit": 10,
+        "totalPages": 5
+      }
+    }
+  }
+  ```
 
 #### Get Transaction by ID
 
