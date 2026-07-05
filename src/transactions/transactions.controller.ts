@@ -42,8 +42,13 @@ export class TransactionsController {
   async findAll(
     @Req() req: Request & { user: { id: number } },
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
   ): Promise<BaseResponse<unknown>> {
-    const result = await this.transactionsService.findAll(req.user.id, limit);
+    const result = await this.transactionsService.findAll(
+      req.user.id,
+      limit,
+      page,
+    );
     return {
       data: result,
       message: 'Transactions retrieved successfully',

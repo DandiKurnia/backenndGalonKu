@@ -8,7 +8,7 @@ import {
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
-import { Transaction, Payment } from '@prisma/client';
+import { Transaction, Payment, Prisma } from '@prisma/client';
 import { PaymentStatus } from 'src/common/enum/payment-status.enum';
 import { QueueService } from 'src/common/queue/queue.service';
 import { XenditWebhookDto } from './dto/xendit-webhook.dto';
@@ -302,7 +302,7 @@ export class TransactionsService {
     payment: true,
   };
 
-  async findAll(userId: number, limit?: number) {
+  async findAll(userId: number, limit?: number, page?: number) {
     const currentUser = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { role: true },
@@ -313,14 +313,7 @@ export class TransactionsService {
     }
 
     const roleKey = currentUser.role.key;
-
-    if (roleKey === 'super-admin') {
-      return this.prisma.transaction.findMany({
-        include: this.listInclude,
-        orderBy: { createdAt: 'desc' },
-        ...(limit && limit > 0 ? { take: limit } : {}),
-      });
-    }
+    let whereClause: Prisma.TransactionWhereInput = {};
 
     if (roleKey === 'operator') {
       if (!currentUser.addressId) {
@@ -328,23 +321,40 @@ export class TransactionsService {
           'Operator does not have an assigned address',
         );
       }
-
-      return this.prisma.transaction.findMany({
-        where: {
-          device: { addressId: currentUser.addressId },
-        },
-        include: this.listInclude,
-        orderBy: { createdAt: 'desc' },
-        ...(limit && limit > 0 ? { take: limit } : {}),
-      });
+      whereClause = {
+        device: { addressId: currentUser.addressId },
+      };
+    } else if (roleKey !== 'super-admin') {
+      whereClause = { userId };
     }
 
-    return this.prisma.transaction.findMany({
-      where: { userId },
-      include: this.listInclude,
-      orderBy: { createdAt: 'desc' },
-      ...(limit && limit > 0 ? { take: limit } : {}),
-    });
+    // Tentukan default page = 1 dan limit = 10 jika melakukan paginasi
+    const p = page && page > 0 ? page : 1;
+    const l = limit && limit > 0 ? limit : 10;
+    const skip = (p - 1) * l;
+
+    const [total, items] = await Promise.all([
+      this.prisma.transaction.count({ where: whereClause }),
+      this.prisma.transaction.findMany({
+        where: whereClause,
+        include: this.listInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: l,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / l);
+
+    return {
+      items,
+      meta: {
+        total,
+        page: p,
+        limit: l,
+        totalPages,
+      },
+    };
   }
 
   async findOne(id: number, userId: number) {
