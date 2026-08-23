@@ -7,6 +7,7 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -65,9 +66,20 @@ export class ProfileController {
           cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
         },
       }),
+      limits: { fileSize: 2 * 1024 * 1024, files: 1 },
       fileFilter: (req, file, cb) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)) {
-          return cb(new Error('Invalid file type'), false);
+        const allowedMime = /^(image\/(jpeg|jpg|png|gif|webp|avif))$/i;
+        const allowedExt = /\.(jpg|jpeg|png|gif|webp|avif)$/i;
+        if (
+          !allowedMime.test(file.mimetype) ||
+          !allowedExt.test(file.originalname)
+        ) {
+          return cb(
+            new BadRequestException(
+              'Invalid file type. Allowed: jpg, jpeg, png, gif, webp, avif',
+            ),
+            false,
+          );
         }
         cb(null, true);
       },
