@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { XenditWebhookDto } from '../dto/xendit-webhook.dto';
 import { TransactionsService } from '../transactions.service';
 import { ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger';
@@ -26,8 +34,13 @@ export class TransactionsWebhookController {
     },
   })
   async handleXenditWebhook(
+    @Headers('x-callback-token') callbackToken: string | undefined,
     @Body() webhookData: XenditWebhookDto,
   ): Promise<{ message: string }> {
+    const expected = process.env.XENDIT_CALLBACK_TOKEN;
+    if (!expected || callbackToken !== expected) {
+      throw new UnauthorizedException('Invalid Xendit callback token');
+    }
     await this.transactionService.handlePaymentWebhook(webhookData);
     return { message: 'Webhook received successfully' };
   }

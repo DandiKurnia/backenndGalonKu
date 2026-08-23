@@ -3,6 +3,7 @@ import { XenditInvoice } from 'src/common/xendit/xendit.service';
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -25,6 +26,8 @@ type NormalizedInvoice = {
 
 @Injectable()
 export class TransactionsService {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly xenditService: XenditService,
@@ -121,9 +124,8 @@ export class TransactionsService {
         normalizedInvoice.expiryDate,
       );
     } catch (error) {
-      console.error(
-        `Failed to enqueue payment expiry job for transaction ${transaction.id}:`,
-        error,
+      this.logger.error(
+        `Failed to enqueue payment expiry job for transaction ${transaction.id}: ${error}`,
       );
     }
 
@@ -157,10 +159,27 @@ export class TransactionsService {
       );
     }
 
+    // Idempotency: already in target status → skip
+    if (payment.status === normalizedStatus) {
+      this.logger.warn(
+        `Webhook idempotent skip: payment ${payment.id} already ${normalizedStatus}`,
+      );
+      return;
+    }
+
+    // Amount check: reject if webhook amount does not match transaction total
+    if (Number(webhookData.amount) !== Number(payment.transaction.totalPrice)) {
+      throw new BadRequestException(
+        `Amount mismatch: webhook ${webhookData.amount} != transaction ${payment.transaction.totalPrice}`,
+      );
+    }
+
     const paymentId: number = Number(payment.id);
     const transactionId: number = Number(payment.transactionId);
     const totalPrice: number = Number(payment.transaction.totalPrice);
-    console.log(paymentId, transactionId, totalPrice);
+    this.logger.log(
+      `Processing webhook: paymentId=${paymentId} transactionId=${transactionId} totalPrice=${totalPrice} status=${normalizedStatus}`,
+    );
 
     await this.prisma.$transaction(async (prisma) => {
       await prisma.payment.update({
@@ -200,9 +219,8 @@ export class TransactionsService {
     try {
       await this.queueService.cancelPaymentExpiryJob(payment.id);
     } catch (error) {
-      console.error(
-        `Failed to cancel payment expiry job for payment ${payment.id}:`,
-        error,
+      this.logger.error(
+        `Failed to cancel payment expiry job for payment ${payment.id}: ${error}`,
       );
     }
 
