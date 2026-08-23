@@ -17,13 +17,26 @@ import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction, Payment } from '@prisma/client';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { JwtAuthGuard } from 'src/auth/guards/legged-in.guard';
+import { ApiTags, ApiBody, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('transactions')
 @UseGuards(JwtAuthGuard)
+@ApiTags('Transactions')
+@ApiBearerAuth()
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create water refill transaction (sends Xendit invoice)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        total_galon: { type: 'number', example: 2 },
+        device_code: { type: 'string', example: 'DEV-1' },
+      },
+    },
+  })
   async create(
     @Body() createTransactionDto: CreateTransactionDto,
     @Req() req: Request & { user: { id: number } },
@@ -39,6 +52,7 @@ export class TransactionsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List transactions (paginated, fallback role-based)' })
   async findAll(
     @Req() req: Request & { user: { id: number } },
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
@@ -56,6 +70,7 @@ export class TransactionsController {
   }
 
   @Get('summary')
+  @ApiOperation({ summary: 'Get dashboard summary' })
   async getDashboardSummary(
     @Req() req: Request & { user: { id: number } },
     @Query('addressId') addressId?: string,
@@ -71,6 +86,7 @@ export class TransactionsController {
   }
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get transaction stats (daily/monthly groupBy)' })
   async getStats(
     @Req() req: Request & { user: { id: number } },
     @Query('groupBy') groupBy?: 'daily' | 'monthly',
@@ -92,6 +108,7 @@ export class TransactionsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get transaction details' })
   async findOne(
     @Param('id') id: string,
     @Req() req: Request & { user: { id: number } },
@@ -104,6 +121,16 @@ export class TransactionsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update transaction (stub) - under dev' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        total_galon: { type: 'number', example: 5, nullable: true },
+        device_code: { type: 'string', example: 'DEV-1', nullable: true },
+      },
+    },
+  })
   update(
     @Param('id') id: string,
     @Body() updateTransactionDto: UpdateTransactionDto,
@@ -112,6 +139,7 @@ export class TransactionsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete transaction' })
   remove(@Param('id') id: string) {
     return this.transactionsService.remove(+id);
   }

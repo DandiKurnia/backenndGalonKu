@@ -4,6 +4,8 @@ import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ZodValidationPipe } from './common/pipes/zod.validation.pipe';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { apiReference } from '@scalar/nestjs-api-reference';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -19,6 +21,24 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
   });
+
+  const config = new DocumentBuilder()
+    .setTitle('Backend API')
+    .setDescription('The API description for the Backend application')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api-docs', app, document); // Fallback standard Swagger UI
+
+  app.use(
+    '/docs',
+    apiReference({
+      spec: {
+        content: document,
+      },
+    }),
+  );
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');

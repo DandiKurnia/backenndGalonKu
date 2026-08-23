@@ -3,13 +3,16 @@ import { DevicesService } from './devices.service';
 import { DeviceAuthGuard } from 'src/auth/guards/device-auth.guard';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { DeviceStatus } from 'src/common/enum/device-status';
+import { ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger';
 
 @Controller('devices/code')
 @UseGuards(DeviceAuthGuard)
+@ApiTags('Public Devices')
 export class DevicesPublicController {
   constructor(private readonly devicesService: DevicesService) {}
 
   @Get(':code/status')
+  @ApiOperation({ summary: 'Get device status (IoT)' })
   async getStatus(
     @Param('code') code: string,
   ): Promise<BaseResponse<{ qrStatus: string; totalGalon: number }>> {
@@ -25,6 +28,20 @@ export class DevicesPublicController {
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update QR status (IoT device)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', example: 'DEV-1' },
+        status: {
+          type: 'string',
+          example: 'SCANNED',
+          enum: ['SCANNED', 'PROCESSING', 'SUCCESS', 'FAILED', 'CANCELLED', 'DONE'],
+        },
+      },
+    },
+  })
   async updateQRStatus(
     @Body('code') code: string,
     @Body('status') status: string,

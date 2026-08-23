@@ -16,6 +16,7 @@ import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBody, ApiOperation, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 
 type RequestWithUser = {
   id: number;
@@ -23,10 +24,13 @@ type RequestWithUser = {
 
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
+@ApiTags('Profile')
+@ApiBearerAuth()
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get current user profile' })
   async findMe(
     @Req() req: Request & { user: RequestWithUser },
   ): Promise<BaseResponse<ProfileResponse>> {
@@ -37,6 +41,20 @@ export class ProfileController {
   }
 
   @Patch()
+  @ApiOperation({ summary: 'Update profile (supports avatar upload)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'John Updated', nullable: true },
+        email: { type: 'string', example: 'john.new@example.com', nullable: true },
+        phone_number: { type: 'string', example: '089998887770', nullable: true },
+        password: { type: 'string', example: 'newpassword123', nullable: true },
+        avatar: { type: 'string', format: 'binary', nullable: true },
+      },
+    },
+  })
   @UseInterceptors(
     FileInterceptor('avatar', {
       storage: diskStorage({
