@@ -12,9 +12,13 @@ type JwtPayload = {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly prisma: PrismaService) {
+    const secret = process.env.JWT_SECRET_KEY;
+    if (!secret) {
+      throw new Error('JWT_SECRET_KEY is not set in environment variables');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET_KEY ?? 'secretKey',
+      secretOrKey: secret,
     });
   }
 

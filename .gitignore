@@ -62,3 +62,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 public/
 flow_dan_prompt_arduino.md
 codeArduino.md
+codeArduini.c++
+obsidianBackend/
+docs/superpowers/

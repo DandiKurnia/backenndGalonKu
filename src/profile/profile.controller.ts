@@ -17,7 +17,8 @@ import { BaseResponse } from 'src/common/interface/base-response.interface';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBody, ApiOperation, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBody, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 
 type RequestWithUser = {
   id: number;

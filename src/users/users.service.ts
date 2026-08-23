@@ -4,11 +4,19 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
+export type SafeUser = Omit<User, 'password'>;
+
+function excludePassword(user: User): SafeUser {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...safeUser } = user;
+  return safeUser;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<SafeUser> {
     const email = await this.prisma.user.findFirst({
       where: { email: createUserDto.email },
     });
@@ -29,11 +37,11 @@ export class UsersService {
       },
     });
 
-    return user;
+    return excludePassword(user);
   }
 
-  async findAll(limit?: number): Promise<User[]> {
-    return this.prisma.user.findMany({
+  async findAll(limit?: number): Promise<SafeUser[]> {
+    const users = await this.prisma.user.findMany({
       where: {
         roleId: {
           in: [1, 3],
@@ -41,9 +49,10 @@ export class UsersService {
       },
       ...(limit && limit > 0 ? { take: limit } : {}),
     });
+    return users.map(excludePassword);
   }
 
-  async update(id: number, updateUserDto: CreateUserDto): Promise<User> {
+  async update(id: number, updateUserDto: CreateUserDto): Promise<SafeUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: id },
     });
@@ -51,7 +60,7 @@ export class UsersService {
       throw new BadRequestException('User not found');
     }
     const hashedPassword = await bcrypt.hash(updateUserDto.password, 10);
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: id },
       data: {
         name: updateUserDto.name,
@@ -62,5 +71,6 @@ export class UsersService {
         addressId: updateUserDto.addressId,
       },
     });
+    return excludePassword(updated);
   }
 }

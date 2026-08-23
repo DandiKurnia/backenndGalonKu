@@ -9,13 +9,12 @@ import {
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { SafeUser, UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/legged-in.guard';
 import { PermissionGuard } from 'src/auth/guards/permission.guard';
 import { RequirePermissions } from 'src/auth/decorators/permissions.decorator';
 import { BaseResponse } from 'src/common/interface/base-response.interface';
-import { User } from '@prisma/client';
 import { ApiTags, ApiBody, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
@@ -43,7 +42,7 @@ export class UsersController {
   })
   async create(
     @Body() createUserDto: CreateUserDto,
-  ): Promise<BaseResponse<User>> {
+  ): Promise<BaseResponse<SafeUser>> {
     return {
       data: await this.usersService.create(createUserDto),
       message: 'User created successfully',
@@ -55,7 +54,7 @@ export class UsersController {
   @ApiOperation({ summary: 'List users' })
   async findAll(
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-  ): Promise<BaseResponse<User[]>> {
+  ): Promise<BaseResponse<SafeUser[]>> {
     return {
       data: await this.usersService.findAll(limit),
       message: 'Users retrieved successfully',
@@ -81,7 +80,7 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: CreateUserDto,
-  ): Promise<BaseResponse<User>> {
+  ): Promise<BaseResponse<SafeUser>> {
     return {
       data: await this.usersService.update(+id, updateUserDto),
       message: 'User updated successfully',

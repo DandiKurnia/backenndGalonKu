@@ -52,6 +52,14 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  private getJwtSecret(): string {
+    const secret = process.env.JWT_SECRET_KEY;
+    if (!secret) {
+      throw new Error('JWT_SECRET_KEY is not set in environment variables');
+    }
+    return secret;
+  }
+
   private generateToken(user: JwtUser): string {
     const payload = {
       sub: user.id,
@@ -61,7 +69,7 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET_KEY ?? 'secretKey',
+      secret: this.getJwtSecret(),
       expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as StringValue,
     });
   }
